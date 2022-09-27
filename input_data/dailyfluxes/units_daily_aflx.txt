@@ -1,0 +1,28 @@
+columns and units for \Research_Flux_Towers\Ameriflux_files\FLUXNET2017\daily_aflx\US-{sitecode}_daily_aflx.csv
+
+
+Date
+GPP_int		total integrated daily GPP			[gC/m^2]
+RECO_int	total integrated daily RECO			[gC/m^2]
+NEE_int		total integrated daily NEE			[gC/m^2]
+NEE_dayint	total integrated daytime NEE			[gC/m^2]
+NEE_nightint	total integrated nightime NEE			[gC/m^2]
+ET_int		total integrated daily ET			[mm]
+ET_dayint	total integrated daytime ET			[mm]
+P_int		total integrated daily precip			[mm]
+TA_avg		mean daily air temperature			[deg C]
+TA_max		max daily air temperature			[deg C]
+RH_avg		mean daily relative humidity			[%]
+SW_IN_avg	mean daily incoming shortwave radiation		[W/m^2]
+NETRAD_avg	mean daily net radiation			[W/m^2]
+PPFD_IN_avg	mean daily PPFD					[W/m^2]
+VPD_avg		mean daily VPD					[kPa]
+VPD_max		max daily VPD					[kPa]
+LE_avg		mean daily latent heat flux			[W/m^2]
+H_avg		mean daily sensible heat flux			[W/m^2]
+
+
+
+
+
+

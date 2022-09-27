@@ -1,0 +1,18 @@
+columns and units for \Research_Flux_Towers\Ameriflux_files\processed_soil_new\daily\{sitecode}_daily_soilmet.csv
+
+
+* pit lables: O - open (no cover), G - grass, S - shrub, J - juniper, P - pinon or any other tree
+* note: number of pits and depths design has changed over the years
+
+Date
+SOILT_{pit}{#}_{depth}cm	mean daily soil temperature in a specific pit and depth	[degC]
+SOILT_{depth}cm_gf		mean daily soil temperaure at a specific depth averaged over all pits, including linear gapfilling periods of less than 5 days
+SWC_{pit}{#}_{depth}cm		mean daily volumetric soil water content in a specific pit and depth [-]
+SWC_{depth}cm_gf		mean daily volumetric soil water content at a specific depth averaged over all pits, including linear gapfilling periods of less than 5 days
+
+
+
+
+
+
+
