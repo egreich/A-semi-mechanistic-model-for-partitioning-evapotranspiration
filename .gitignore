@@ -6,7 +6,7 @@
 .DS_Store
 
 # Suppress folders
-input_data/
-clean_data/
-clean_data/
-output_CWC/
+input_data/*
+clean_data/*
+clean_data/*
+output_CWC/*
