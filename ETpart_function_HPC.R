@@ -2,6 +2,21 @@
 
 ETpart <- function(dataIN, dataIN_wue, dataIN_gpp, key){
   
+  # Set run params
+  args<-commandArgs(TRUE)
+  print(args)
+  print("chain:")
+  (chain <- as.numeric(args[1]))
+  print("site:")
+  (site <- as.numeric(args[2]))
+  print("seed:")
+  (SEED <- as.numeric(args[3]))
+  
+  # Set defined R seed
+  set.seed(SEED, kind = NULL, normal.kind = NULL)
+  # Generate "random" seed for jags
+  JAGS.seed<-ceiling(runif(1,1,10000000))
+  
   # Create necessary folders if they do not already exist
   if(!file.exists("output_coda")) { dir.create("output_coda")}
   if(!file.exists("output_dfs")) { dir.create("output_dfs")}
@@ -152,10 +167,10 @@ ETpart <- function(dataIN, dataIN_wue, dataIN_gpp, key){
   
   # Extract mean and 2.5 and 97.5 quantiles from summary tables
   
-    # Function to extract posterior means, and 2.5 and 97.5 CI quantiles
-    # takes a list of variable names and the coda summary
-    # all variables in the list MUST have the same length posterior outputs
-    # Similar version called coda_to_rows available in the coda4dummies package via devtools::install_github("egreich/coda4dummies")
+  # Function to extract posterior means, and 2.5 and 97.5 CI quantiles
+  # takes a list of variable names and the coda summary
+  # all variables in the list MUST have the same length posterior outputs
+  # Similar version called coda_to_rows available in the coda4dummies package via devtools::install_github("egreich/coda4dummies")
   get_coda_rows_to_cols <- function(var_list, coda_sum){
     
     sum_tb <- coda_sum[["statistics"]]
@@ -164,7 +179,7 @@ ETpart <- function(dataIN, dataIN_wue, dataIN_gpp, key){
     voi_list <- list()
     column_names <- list()
     j = 1
-
+    
     for(i in c(1:length(var_list))){
       
       searchterm <- paste("^", var_list[i], "\\[", sep = "")
@@ -177,7 +192,7 @@ ETpart <- function(dataIN, dataIN_wue, dataIN_gpp, key){
           next
         }
       }
-
+      
       voi_list[[j]] <- sum_tb[grep(searchterm, row.names(sum_tb)),1]
       voi_list[[j+1]] <- quan_tb[grep(searchterm, row.names(quan_tb)),1]
       voi_list[[j+2]] <- quan_tb[grep(searchterm, row.names(quan_tb)),5]
@@ -187,12 +202,12 @@ ETpart <- function(dataIN, dataIN_wue, dataIN_gpp, key){
       column_names[[j+2]] <- paste("cred97.5_", var_list[i], sep = "")
       
       j = j + 3
-    
+      
     }
     suppressMessages(df <- dplyr::bind_cols(voi_list))
     colnames(df) <- column_names
     return(df)
-
+    
   }
   
   varlist <- c("ET", "ET.pred", "ET.rep", "E.model", "T.pred", "T.ratio") #, "S.corr"

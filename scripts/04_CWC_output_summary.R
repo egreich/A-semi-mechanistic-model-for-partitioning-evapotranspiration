@@ -1,15 +1,18 @@
-# Create graphs from monsoon output
+###########################################################################################
+###################### Create summary CWC graphs from output ######################
+###########################################################################################
 
-
-setwd("~/Documents/Emma/NAU/NMfluxtowers/TET_dailyfluxes/Ecohydrology_Bayesian_ETpartition_model/Ecohy_flex") # set your working directory
 
 library(tidyverse)
-library(ggforce)
-library(cowplot)
-library(lubridate)
-library("biwavelet") # cross wavelet
+#library(ggforce) # for plotting with geom_link2
+library(cowplot) # for saving graphs
+library(lubridate) # for dates
+library("biwavelet") # cross wavelet package
 #library("pracma")
-library(matrixStats)
+#library(matrixStats)
+
+# Create necessary folders if they do not already exist
+if(!file.exists("graphs")) { dir.create("graphs")}
 
 
 d_B_ses = read.csv("/output_dfs/d_B_ses.csv")
@@ -28,29 +31,13 @@ d_B_vcs = read.csv("/output_dfs/d_B_vcs.csv")
 d_B_vcs$date <- as.Date(d_B_vcs$date,"%Y-%m-%d")
 
 
-d_B_wue_ses = read.csv("~/Documents/Emma/NAU/NMfluxtowers/TET_dailyfluxes/Ecohydrology_Bayesian_ETpartition_model/Ecohy_flex/output_dfs/d_B_wue_ses.csv")
-d_B_wue_seg = read.csv("~/Documents/Emma/NAU/NMfluxtowers/TET_dailyfluxes/Ecohydrology_Bayesian_ETpartition_model/Ecohy_flex/output_dfs/d_B_wue_seg.csv")
-d_B_wue_wjs = read.csv("~/Documents/Emma/NAU/NMfluxtowers/TET_dailyfluxes/Ecohydrology_Bayesian_ETpartition_model/Ecohy_flex/output_dfs/d_B_wue_wjs.csv")
-d_B_wue_mpj = read.csv("~/Documents/Emma/NAU/NMfluxtowers/TET_dailyfluxes/Ecohydrology_Bayesian_ETpartition_model/Ecohy_flex/output_dfs/d_B_wue_mpj.csv")
-d_B_wue_vcp = read.csv("~/Documents/Emma/NAU/NMfluxtowers/TET_dailyfluxes/Ecohydrology_Bayesian_ETpartition_model/Ecohy_flex/output_dfs/d_B_wue_vcp.csv")
-d_B_wue_vcm = read.csv("~/Documents/Emma/NAU/NMfluxtowers/TET_dailyfluxes/Ecohydrology_Bayesian_ETpartition_model/Ecohy_flex/output_dfs/d_B_wue_vcm.csv")
-d_B_wue_vcs = read.csv("~/Documents/Emma/NAU/NMfluxtowers/TET_dailyfluxes/Ecohydrology_Bayesian_ETpartition_model/Ecohy_flex/output_dfs/d_B_wue_vcs.csv")
-
-d_B_gpp_ses = read.csv("~/Documents/Emma/NAU/NMfluxtowers/TET_dailyfluxes/Ecohydrology_Bayesian_ETpartition_model/Ecohy_flex/output_dfs/d_B_gpp_ses.csv")
-d_B_gpp_seg = read.csv("~/Documents/Emma/NAU/NMfluxtowers/TET_dailyfluxes/Ecohydrology_Bayesian_ETpartition_model/Ecohy_flex/output_dfs/d_B_gpp_seg.csv")
-d_B_gpp_wjs = read.csv("~/Documents/Emma/NAU/NMfluxtowers/TET_dailyfluxes/Ecohydrology_Bayesian_ETpartition_model/Ecohy_flex/output_dfs/d_B_gpp_wjs.csv")
-d_B_gpp_mpj = read.csv("~/Documents/Emma/NAU/NMfluxtowers/TET_dailyfluxes/Ecohydrology_Bayesian_ETpartition_model/Ecohy_flex/output_dfs/d_B_gpp_mpj.csv")
-d_B_gpp_vcp = read.csv("~/Documents/Emma/NAU/NMfluxtowers/TET_dailyfluxes/Ecohydrology_Bayesian_ETpartition_model/Ecohy_flex/output_dfs/d_B_gpp_vcp.csv")
-d_B_gpp_vcm = read.csv("~/Documents/Emma/NAU/NMfluxtowers/TET_dailyfluxes/Ecohydrology_Bayesian_ETpartition_model/Ecohy_flex/output_dfs/d_B_gpp_vcm.csv")
-d_B_gpp_vcs = read.csv("~/Documents/Emma/NAU/NMfluxtowers/TET_dailyfluxes/Ecohydrology_Bayesian_ETpartition_model/Ecohy_flex/output_dfs/d_B_gpp_vcs.csv")
-
-d_B_wue.overall_ses = read.csv("~/Documents/Emma/NAU/NMfluxtowers/TET_dailyfluxes/Ecohydrology_Bayesian_ETpartition_model/Ecohy_flex/output_dfs/d_B_wue.overall_ses.csv")
-d_B_wue.overall_seg = read.csv("~/Documents/Emma/NAU/NMfluxtowers/TET_dailyfluxes/Ecohydrology_Bayesian_ETpartition_model/Ecohy_flex/output_dfs/d_B_wue.overall_seg.csv")
-d_B_wue.overall_wjs = read.csv("~/Documents/Emma/NAU/NMfluxtowers/TET_dailyfluxes/Ecohydrology_Bayesian_ETpartition_model/Ecohy_flex/output_dfs/d_B_wue.overall_wjs.csv")
-d_B_wue.overall_mpj = read.csv("~/Documents/Emma/NAU/NMfluxtowers/TET_dailyfluxes/Ecohydrology_Bayesian_ETpartition_model/Ecohy_flex/output_dfs/d_B_wue.overall_mpj.csv")
-d_B_wue.overall_vcp = read.csv("~/Documents/Emma/NAU/NMfluxtowers/TET_dailyfluxes/Ecohydrology_Bayesian_ETpartition_model/Ecohy_flex/output_dfs/d_B_wue.overall_vcp.csv")
-d_B_wue.overall_vcm = read.csv("~/Documents/Emma/NAU/NMfluxtowers/TET_dailyfluxes/Ecohydrology_Bayesian_ETpartition_model/Ecohy_flex/output_dfs/d_B_wue.overall_vcm.csv")
-d_B_wue.overall_vcs = read.csv("~/Documents/Emma/NAU/NMfluxtowers/TET_dailyfluxes/Ecohydrology_Bayesian_ETpartition_model/Ecohy_flex/output_dfs/d_B_wue.overall_vcs.csv")
+d_B_wue_ses = read.csv("/output_dfs/d_B_wue_ses.csv")
+d_B_wue_seg = read.csv("/output_dfs/d_B_wue_seg.csv")
+d_B_wue_wjs = read.csv("/output_dfs/d_B_wue_wjs.csv")
+d_B_wue_mpj = read.csv("/output_dfs/d_B_wue_mpj.csv")
+d_B_wue_vcp = read.csv("/output_dfs/d_B_wue_vcp.csv")
+d_B_wue_vcm = read.csv("/output_dfs/d_B_wue_vcm.csv")
+d_B_wue_vcs = read.csv("/output_dfs/d_B_wue_vcs.csv")
 
 ################### Change date to water date for convenience of graphing
 d_B_ses$water_date <- as.Date(with(d_B_ses,paste(water_year,month,day,sep="-")),"%Y-%m-%d")
@@ -111,20 +98,19 @@ remove(ses_env, seg_env, wjs_env, mpj_env, vcp_env, vcm_env, vcs_env)
 
 ############################### Graph CWC analysis output summary
 
+path_out = "/graphs" # set your output path
+
 
 site_label_list <- c("seg", "ses", "wjs", "mpj", "vcp", "vcm", "vcs")
 graph_label_list <- c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm", "US-Vcs")
 var_label_list <- c("P", "LAI", "VPD", "SWC", "Tair", "Tsoil", "PAR")
 
-setwd("~/Documents/Emma/NAU/NMfluxtowers/TET_dailyfluxes/Ecohydrology_Bayesian_ETpartition_model/Ecohy_flex/graphs") # set your working directory
-path_out = "~/Documents/Emma/NAU/NMfluxtowers/TET_dailyfluxes/Ecohydrology_Bayesian_ETpartition_model/Ecohy_flex/graphs" # set your output path
 
-
-d_CWC_T_longer = read.csv("/Users/megreich/Documents/Emma/NAU/NMfluxtowers/TET_dailyfluxes/Ecohydrology_Bayesian_ETpartition_model/Ecohy_flex/CWC_monsoon/output_dfs/d_CWC_T_longer.csv")
+d_CWC_T_longer = read.csv("/output_CWC/T/d_CWC_T_longer.csv")
 d_CWC_T_longer$site <- factor(d_CWC_T_longer$site, levels = c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm", "US-Vcs"))
-d_CWC_WUE_longer = read.csv("/Users/megreich/Documents/Emma/NAU/NMfluxtowers/TET_dailyfluxes/Ecohydrology_Bayesian_ETpartition_model/Ecohy_flex/CWC_monsoon/output_dfs/d_CWC_WUE_longer.csv")
+d_CWC_WUE_longer = read.csv("/output_CWC/WUE/d_CWC_WUE_longer.csv")
 d_CWC_WUE_longer$site <- factor(d_CWC_WUE_longer$site, levels = c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm", "US-Vcs"))
-d_CWC_T_ratio_longer = read.csv("/Users/megreich/Documents/Emma/NAU/NMfluxtowers/TET_dailyfluxes/Ecohydrology_Bayesian_ETpartition_model/Ecohy_flex/CWC_monsoon/output_dfs/d_CWC_T_ratio_longer.csv")
+d_CWC_T_ratio_longer = read.csv("/output_CWC/T_ratio/d_CWC_T_ratio_longer.csv")
 d_CWC_T_ratio_longer$site <- factor(d_CWC_T_ratio_longer$site, levels = c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm", "US-Vcs"))
 
 # calculate which variable is leading:
@@ -145,10 +131,11 @@ d_CWC_T_ratio_longer$lead <- ifelse(temp_phase > 4.71, "Env var leading", "T/ET 
 d_CWC_T_ratio_longer$lead <- ifelse((temp_phase > 1.57 & temp_phase < 3.14), "Env var leading", d_CWC_T_ratio_longer$lead)
 d_CWC_T_ratio_longer$lead <- ifelse(temp_phase == 0, "no lag", d_CWC_T_ratio_longer$lead)
 
-load("/Users/megreich/Documents/Emma/NAU/NMfluxtowers/TET_dailyfluxes/Ecohydrology_Bayesian_ETpartition_model/Ecohy_flex/CWC_monsoon/output_dfs/wtc.T.RData")
-wtc.T.list <- wtc.mat
-load("/Users/megreich/Documents/Emma/NAU/NMfluxtowers/TET_dailyfluxes/Ecohydrology_Bayesian_ETpartition_model/Ecohy_flex/CWC_monsoon/output_dfs/wtc.WUE.RData")
-wtc.WUE.list <- wtc.mat
+### Load wtc objects
+#load("/output_CWC/T/wtc.T.RData")
+#wtc.T.list <- wtc.mat
+#load("/output_CWC/WUE/wtc.WUE.RData")
+#wtc.WUE.list <- wtc.mat
 
 (p <- d_CWC_WUE_longer %>%
     filter(!grepl("phase",var)) %>%

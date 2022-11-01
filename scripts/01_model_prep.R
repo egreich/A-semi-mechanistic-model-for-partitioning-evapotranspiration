@@ -649,7 +649,7 @@ dataIN_gpp_vcm <- dataIN_wue_vcm %>%
          end.postmonsoon = vcm_postmonsoon_end$block)
 
 ################# Save prepped dataframes as R objects
-save(dataIN_vcm, file = "./clean_data/dataIN_vcm.R")
+save(dataIN_vcm, file = "./clean_data/dataIN_vcm.RData")
 save(dataIN_wue_vcm, file = "./clean_data/dataIN_wue_vcm.RData")
 save(dataIN_gpp_vcm, file = "./clean_data/dataIN_gpp_vcm.RData")
 

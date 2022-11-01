@@ -5,13 +5,14 @@
 ###########################################################################################
 
 library(rjags)
+library(tidyverse)
 
 source("./scripts/ETpart_function.R")
 load("./clean_data/dataIN_mpj.RData")
 load("./clean_data/dataIN_wue_mpj.RData")
 load("./clean_data/dataIN_gpp_mpj.RData")
 
-output <- ETpart(dataIN_mpj, dataIN_wue_mpj, dataIN_gpp_mpj, "./output_coda/zc_mpj.Rdata", "./output_coda/sum_mpj.csv", "./output_coda/quan_mpj.csv")
+output <- ETpart(dataIN_mpj, dataIN_wue_mpj, dataIN_gpp_mpj, "mpj")
 
 #################################### Save output as separate data frames
 
