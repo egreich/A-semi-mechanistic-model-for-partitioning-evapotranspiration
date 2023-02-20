@@ -22,39 +22,71 @@ if(!file.exists("output_CWC/T/graphs")) { dir.create("output_CWC/T/graphs")}
 if(!file.exists("output_CWC/T_ratio/graphs")) { dir.create("output_CWC/T_ratio/graphs")}
 
 
-d_B_ses = read.csv("/output_dfs/d_B_ses.csv")
-d_B_ses$date <- paste(d_B_ses$year, d_B_ses$month, d_B_ses$day, sep="-") %>% ymd() %>% as.Date()
-d_B_seg = read.csv("/output_dfs/d_B_seg.csv")
-d_B_seg$date <- as.Date(d_B_seg$date,"%Y-%m-%d")
-d_B_wjs = read.csv("/output_dfs/d_B_wjs.csv")
-d_B_wjs$date <- as.Date(d_B_wjs$date,"%Y-%m-%d")
-d_B_mpj = read.csv("/output_dfs/d_B_mpj.csv")
-d_B_mpj$date <- as.Date(d_B_mpj$date,"%Y-%m-%d")
-d_B_vcp = read.csv("/output_dfs/d_B_vcp.csv")
-d_B_vcp$date <- as.Date(d_B_vcp$date,"%Y-%m-%d")
-d_B_vcm = read.csv("/output_dfs/d_B_vcm.csv")
-d_B_vcm$date <- as.Date(d_B_vcm$date,"%Y-%m-%d")
-d_B_vcs = read.csv("/output_dfs/d_B_vcs.csv")
-d_B_vcs$date <- as.Date(d_B_vcs$date,"%Y-%m-%d")
+# d_B_ses = read.csv("/output_dfs/d_B_ses.csv")
+# d_B_ses$date <- paste(d_B_ses$year, d_B_ses$month, d_B_ses$day, sep="-") %>% ymd() %>% as.Date()
+# d_B_seg = read.csv("/output_dfs/d_B_seg.csv")
+# d_B_seg$date <- as.Date(d_B_seg$date,"%Y-%m-%d")
+# d_B_wjs = read.csv("/output_dfs/d_B_wjs.csv")
+# d_B_wjs$date <- as.Date(d_B_wjs$date,"%Y-%m-%d")
+# d_B_mpj = read.csv("/output_dfs/d_B_mpj.csv")
+# d_B_mpj$date <- as.Date(d_B_mpj$date,"%Y-%m-%d")
+# d_B_vcp = read.csv("/output_dfs/d_B_vcp.csv")
+# d_B_vcp$date <- as.Date(d_B_vcp$date,"%Y-%m-%d")
+# d_B_vcm = read.csv("/output_dfs/d_B_vcm.csv")
+# d_B_vcm$date <- as.Date(d_B_vcm$date,"%Y-%m-%d")
+# d_B_vcs = read.csv("/output_dfs/d_B_vcs.csv")
+# d_B_vcs$date <- as.Date(d_B_vcs$date,"%Y-%m-%d")
+# 
+# 
+# d_B_wue_ses = read.csv("/output_dfs/d_B_wue_ses.csv")
+# d_B_wue_seg = read.csv("/output_dfs/d_B_wue_seg.csv")
+# d_B_wue_wjs = read.csv("/output_dfs/d_B_wue_wjs.csv")
+# d_B_wue_mpj = read.csv("/output_dfs/d_B_wue_mpj.csv")
+# d_B_wue_vcp = read.csv("/output_dfs/d_B_wue_vcp.csv")
+# d_B_wue_vcm = read.csv("/output_dfs/d_B_wue_vcm.csv")
+# d_B_wue_vcs = read.csv("/output_dfs/d_B_wue_vcs.csv")
+key <- c("seg", "ses", "wjs", "mpj", "vcp", "vcm1","vcm2", "vcs")
+for(i in c(1:8)){
+  filename <- paste("./clean_data/dataIN_", key[i], ".RData", sep="")
+  load(filename)
+}
+for(i in c(1:8)){
+  filename <- paste("./clean_data/dataIN_wue_", key[i], ".RData", sep="")
+  load(filename)
+}
 
+d_list <- list()
+for(i in c(1:8)){
+  filename <- paste("./clean_data/dataIN_", key[i], ".RData", sep="")
+  load(filename)
+  d_IN <- get(paste("dataIN_",key[i],sep=""))
+  filename <- paste("./output_dfs/df_sum_", key[i], ".csv", sep="")
+  d_temp <- read.csv(filename)
+  d_list[[i]] <- d_IN %>%
+    mutate(B_T = d_temp$mean[d_temp$var == "T.pred"],
+           T_ratio = d_temp$mean[d_temp$var == "T.ratio"])
+}
+d_wue_list <- list()
+for(i in c(1:8)){
+  filename <- paste("./clean_data/dataIN_wue_", key[i], ".RData", sep="")
+  load(filename)
+  d_IN <- get(paste("dataIN_wue_",key[i],sep=""))
+  filename <- paste("./output_dfs/df_sum_", key[i], ".csv", sep="")
+  d_temp <- read.csv(filename)
+  d_wue_list[[i]] <- d_IN %>%
+    mutate(B_T = d_temp$mean[d_temp$var == "WUE.pred"])
+}
 
-d_B_wue_ses = read.csv("/output_dfs/d_B_wue_ses.csv")
-d_B_wue_seg = read.csv("/output_dfs/d_B_wue_seg.csv")
-d_B_wue_wjs = read.csv("/output_dfs/d_B_wue_wjs.csv")
-d_B_wue_mpj = read.csv("/output_dfs/d_B_wue_mpj.csv")
-d_B_wue_vcp = read.csv("/output_dfs/d_B_wue_vcp.csv")
-d_B_wue_vcm = read.csv("/output_dfs/d_B_wue_vcm.csv")
-d_B_wue_vcs = read.csv("/output_dfs/d_B_wue_vcs.csv")
 
 
 ##############################################################################################################
 #################################### Cross-wavelet coherence for WUE LOOP ####################################
 ##############################################################################################################
-site_label_list <- c("seg", "ses", "wjs", "mpj", "vcp", "vcm", "vcs")
-graph_label_list <- c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm", "US-Vcs")
-d_list <- list(d_B_wue_seg, d_B_wue_ses, d_B_wue_wjs, d_B_wue_mpj, d_B_wue_vcp, d_B_wue_vcm, d_B_wue_vcs)
+site_label_list <- c("seg", "ses", "wjs", "mpj", "vcp", "vcm1","vcm2", "vcs")
+graph_label_list <- c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm1", "US-Vcm2", "US-Vcs")
+d_list <- d_wue_list
 #var_list <- c("P_total", "LAI_mod", "VPD", "S", "Tair", "Tsoil", "PPFD_IN")
-var_list <- c(7, 9:14)
+var_list <- c(7, 9:11, 13:16)
 var_label_list <- c("P", "LAI", "VPD", "SWC", "Tair", "Tsoil", "PAR")
 
 
@@ -68,7 +100,7 @@ list_sd_rsq <- list()
 list_var_phase <- list()
 list.site <- list()
 
-for(i in c(1:7)){ # site level
+for(i in c(1:8)){ # site level
   print(i)
   d_B_wue_temp <- as.data.frame(d_list[i])
   
@@ -94,7 +126,7 @@ for(i in c(1:7)){ # site level
     #test <- as.data.frame(wtc.AB$coi)
     for(m in c(1:nrow(temp.rsq))){
       for(n in c(1:ncol(temp.rsq))){
-        if(temp.signif[m,n] < 0.95){
+        if(temp.signif[m,n] < 0.7){
           temp.rsq[m,n] = NA
           temp.phase[m,n] = NA
         }
@@ -132,10 +164,13 @@ for(i in c(1:7)){ # site level
      if(i %in% c(3,4)){ # wjs, mpj
        axis(side = 3, at = c(seq(0, n, 52)), labels = c(seq(2009, 2021, 1)))
      }
-     if(i == 6){ # vcm
-       axis(side = 3, at = c(seq(0, n, 52)), labels = c(2009,2010,2011,2012,2014,2015,2016,2017,2018,2019,2020,2021))
+     if(i == 6){ # vcm1
+       axis(side = 3, at = c(seq(0, n, 52)), labels = c(2009,2010,2011,2012))
      }
-     if(i == 7){ # vcs
+     if(i == 7){ # vcm2
+       axis(side = 3, at = c(seq(0, n, 52)), labels = c(2014,2015,2016,2017,2018,2019,2020,2021))
+     }
+     if(i == 8){ # vcs
        axis(side = 3, at = c(seq(0, n, 52)), labels = c(seq(2017, 2021, 1)))
      }
      if(i %in% c(1,2)){ # seg, ses
@@ -218,19 +253,19 @@ d_CWC_WUE_longer <- d_CWC_WUE_longer %>%
 d_CWC_WUE_longer$sd <- as.numeric(d_CWC_WUE_longer$sd)
 d_CWC_WUE_longer$phase <- as.numeric(d_CWC_WUE_longer$phase)
 d_CWC_WUE_longer$site <- factor(d_CWC_WUE_longer$site, levels = site_label_list, labels = c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm", "US-Vcs"))
-write.csv(d_CWC_WUE_longer,"/WUE/d_CWC_WUE_longer.csv", row.names = F)
-save(wtc.mat, file = "/WUE/wtc.WUE.RData")
+write.csv(d_CWC_WUE_longer,"/output_CWC/WUE/d_CWC_WUE_longer.csv", row.names = F)
+save(wtc.mat, file = "/output_CWC/WUE/wtc.WUE.RData")
 graphics.off()
 
 
 ##############################################################################################################
 #################################### Cross-wavelet coherence for T LOOP ####################################
 ##############################################################################################################
-site_label_list <- c("seg", "ses", "wjs", "mpj", "vcp", "vcm", "vcs")
-graph_label_list <- c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm", "US-Vcs")
-d_list <- list(d_B_seg, d_B_ses, d_B_wjs, d_B_mpj, d_B_vcp, d_B_vcm, d_B_vcs)
-var_list <- c(9:11, 14:16, 18)
-var_label_list <- c("VPD", "P", "Tair", "PAR", "SWC","Tsoil", "LAI")
+site_label_list <- c("seg", "ses", "wjs", "mpj", "vcp", "vcm1","vcm2", "vcs")
+graph_label_list <- c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm1", "US-Vcm2", "US-Vcs")
+d_list <- d_list
+var_list <- c(9:11, 14:15, 17:18, 20)
+var_label_list <- c("VPD", "P", "Tair", "PAR", "SWCshall","SWCdeep", "Tsoil", "LAI")
 
 
 sublist3 <- list() # biwavelet level
@@ -243,7 +278,7 @@ list_sd_rsq <- list()
 list_var_phase <- list()
 list.site <- list()
 
-for(i in c(1:7)){ # site level
+for(i in c(1:8)){ # site level
   print(i)
   d_B_temp <- as.data.frame(d_list[i])
   
@@ -269,7 +304,7 @@ for(i in c(1:7)){ # site level
     #test <- as.data.frame(wtc.AB$coi)
     for(m in c(1:nrow(temp.rsq))){
       for(n in c(1:ncol(temp.rsq))){
-        if(temp.signif[m,n] < 0.95){
+        if(temp.signif[m,n] < 0.7){
           temp.rsq[m,n] = NA
           temp.phase[m,n] = NA
         }
@@ -307,10 +342,13 @@ for(i in c(1:7)){ # site level
     if(i %in% c(3,4)){ # wjs, mpj
       axis(side = 3, at = c(seq(0, n, 365)), labels = c(seq(2009, 2021, 1)))
     }
-    if(i == 6){ # vcm
-      axis(side = 3, at = c(seq(0, n, 365)), labels = c(2009,2010,2011,2012,2014,2015,2016,2017,2018,2019,2020,2021))
+    if(i == 6){ # vcm1
+      axis(side = 3, at = c(seq(0, n, 365)), labels = c(2009,2010,2011,2012))
     }
-    if(i == 7){ # vcs
+    if(i == 7){ # vcm2
+      axis(side = 3, at = c(seq(0, n, 365)), labels = c(2014,2015,2016,2017,2018,2019,2020,2021))
+    }
+    if(i == 8){ # vcs
       axis(side = 3, at = c(seq(0, n, 365)), labels = c(seq(2017, 2021, 1)))
     }
     if(i %in% c(1,2)){ # seg, ses
@@ -393,33 +431,19 @@ d_CWC_T_longer <- d_CWC_T_longer %>%
 d_CWC_T_longer$sd <- as.numeric(d_CWC_T_longer$sd)
 d_CWC_T_longer$phase <- as.numeric(d_CWC_T_longer$phase)
 d_CWC_T_longer$site <- factor(d_CWC_T_longer$site, levels = site_label_list, labels = c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm", "US-Vcs"))
-write.csv(d_CWC_T_longer,"d_CWC_T_longer.csv", row.names = F)
-save(wtc.mat, file = "wtc.T.RData")
+write.csv(d_CWC_T_longer,"/output_CWC/T/d_CWC_T_longer.csv", row.names = F)
+save(wtc.mat, file = "/output_CWC/T/wtc.T.RData")
 graphics.off()
 
 
 ##############################################################################################################
 #################################### Cross-wavelet coherence for T/ET LOOP ####################################
 ##############################################################################################################
-d_B_seg <- d_B_seg %>%
-  mutate(T_ratio = B_T/ET)
-d_B_ses <- d_B_ses %>%
-  mutate(T_ratio = B_T/ET)
-d_B_wjs <- d_B_wjs %>%
-  mutate(T_ratio = B_T/ET)
-d_B_mpj <- d_B_mpj %>%
-  mutate(T_ratio = B_T/ET)
-d_B_vcp <- d_B_vcp %>%
-  mutate(T_ratio = B_T/ET)
-d_B_vcm <- d_B_vcm %>%
-  mutate(T_ratio = B_T/ET)
-d_B_vcs <- d_B_vcs %>%
-  mutate(T_ratio = B_T/ET)
-site_label_list <- c("seg", "ses", "wjs", "mpj", "vcp", "vcm", "vcs")
-graph_label_list <- c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm", "US-Vcs")
-d_list <- list(d_B_seg, d_B_ses, d_B_wjs, d_B_mpj, d_B_vcp, d_B_vcm, d_B_vcs)
-var_list <- c(9:11, 14:16, 18)
-var_label_list <- c("VPD", "P", "Tair", "PAR", "SWC","Tsoil", "LAI")
+site_label_list <- c("seg", "ses", "wjs", "mpj", "vcp", "vcm1","vcm2", "vcs")
+graph_label_list <- c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm1", "US-Vcm2", "US-Vcs")
+d_list <- d_list
+var_list <- c(9:11, 14:15, 17:18, 20)
+var_label_list <- c("VPD", "P", "Tair", "PAR", "SWCshall","SWCdeep", "Tsoil", "LAI")
 
 sublist3 <- list() # biwavelet level
 sublist2 <- list(sublist3, sublist3, sublist3, sublist3, sublist3, sublist3, sublist3) # var level
@@ -431,7 +455,7 @@ list_sd_rsq <- list()
 list_var_phase <- list()
 list.site <- list()
 
-for(i in c(1:7)){ # site level
+for(i in c(1:8)){ # site level
   print(i)
   d_B_temp <- as.data.frame(d_list[i])
   
@@ -457,7 +481,7 @@ for(i in c(1:7)){ # site level
     #test <- as.data.frame(wtc.AB$coi)
     for(m in c(1:nrow(temp.rsq))){
       for(n in c(1:ncol(temp.rsq))){
-        if(temp.signif[m,n] < 0.95){ # 0.5% sig level
+        if(temp.signif[m,n] < 0.7){ # sig level
           temp.rsq[m,n] = NA
           temp.phase[m,n] = NA
         }
@@ -495,10 +519,13 @@ for(i in c(1:7)){ # site level
     if(i %in% c(3,4)){ # wjs, mpj
       axis(side = 3, at = c(seq(0, n, 365)), labels = c(seq(2009, 2021, 1)))
     }
-    if(i == 6){ # vcm
-      axis(side = 3, at = c(seq(0, n, 365)), labels = c(2009,2010,2011,2012,2014,2015,2016,2017,2018,2019,2020,2021))
+    if(i == 6){ # vcm1
+      axis(side = 3, at = c(seq(0, n, 365)), labels = c(2009,2010,2011,2012))
     }
-    if(i == 7){ # vcs
+    if(i == 7){ # vcm2
+      axis(side = 3, at = c(seq(0, n, 365)), labels = c(2014,2015,2016,2017,2018,2019,2020,2021))
+    }
+    if(i == 8){ # vcs
       axis(side = 3, at = c(seq(0, n, 365)), labels = c(seq(2017, 2021, 1)))
     }
     if(i %in% c(1,2)){ # seg, ses
@@ -581,6 +608,6 @@ d_CWC_T_ratio_longer <- d_CWC_T_ratio_longer %>%
 d_CWC_T_ratio_longer$sd <- as.numeric(d_CWC_T_ratio_longer$sd)
 d_CWC_T_ratio_longer$phase <- as.numeric(d_CWC_T_ratio_longer$phase)
 d_CWC_T_ratio_longer$site <- factor(d_CWC_T_ratio_longer$site, levels = site_label_list, labels = c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm", "US-Vcs"))
-write.csv(d_CWC_T_ratio_longer,"/T_ratio/d_CWC_T_ratio_longer.csv", row.names = F)
-save(wtc.mat, file = "/T_ratio/wtc.T_ratio.RData")
+write.csv(d_CWC_T_ratio_longer,"/output_CWC/T_ratio/d_CWC_T_ratio_longer.csv", row.names = F)
+save(wtc.mat, file = "/output_CWC/T_ratio/wtc.T_ratio.RData")
 graphics.off()

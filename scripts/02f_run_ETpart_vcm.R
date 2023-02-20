@@ -5,14 +5,18 @@
 ###########################################################################################
 
 library(rjags)
+module.load('dic')
 library(tidyverse)
 
+source("./scripts/ETpart_initialize_function.R")
 source("./scripts/ETpart_function.R")
-load("./clean_data/dataIN_vcm.RData")
-load("./clean_data/dataIN_wue_vcm.RData")
-load("./clean_data/dataIN_gpp_vcm.RData")
+load("./clean_data/dataIN_vcm2.RData")
+load("./clean_data/dataIN_wue_vcm2.RData")
+load("./clean_data/dataIN_gpp_vcm2.RData")
 
-output <- ETpart(dataIN_vcm, dataIN_wue_vcm, dataIN_gpp_vcm, "vcm")
+get_ETpart_inits(dataIN_vcm2, dataIN_wue_vcm2, dataIN_gpp_vcm2, "mpj", ECOSTRESS=F)
+
+ETpart(dataIN_mpj, dataIN_wue_mpj, dataIN_gpp_mpj, "mpj", ECOSTRESS=F)
 
 #################################### Save output as separate data frames
 

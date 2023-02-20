@@ -1,57 +1,121 @@
 #!/usr/bin/env Rscript
 
 # Function to summarize coda
-coda_rows_to_cols <- function(var_list, coda_sum, colnams = NULL){
+coda_rows_to_cols <- function(var_list, coda_sum = NULL, df = NULL, colnams = NULL, to_join = NULL){
   
-  sum_tb <- coda_sum[["statistics"]]
-  quan_tb <- coda_sum[["quantiles"]]
-  
-  voi_list <- list()
-  column_names <- list()
-  j = 1
-  
-  for(i in c(1:length(var_list))){
+  # if we are working directly with the coda object
+  if(is.null(df)){
+    sum_tb <- coda_sum[["statistics"]]
+    quan_tb <- coda_sum[["quantiles"]]
     
-    searchterm <- paste("^", var_list[i], "\\[", sep = "")
+    voi_list <- list()
+    column_names <- list()
+    j = 1
     
-    # Check if there is more than instance of the variable or not
-    if(length(grep(searchterm, row.names(sum_tb))) == 0){ # if we find nothing
-      searchterm <- paste("^", var_list[i], sep = "") # check if there is only one instance and correct the search term
-      if(length(grep(searchterm, row.names(sum_tb))) == 0){ # if we still find nothing
-        searchterm <- paste(utils::glob2rx(var_list[i]), sep = "") # check if user is using *
+    for(i in c(1:length(var_list))){
+      
+      searchterm <- paste("^", var_list[i], "\\[", sep = "")
+      
+      # Check if there is more than instance of the variable or not
+      if(length(grep(searchterm, row.names(sum_tb))) == 0){ # if we find nothing
+        searchterm <- paste("^", var_list[i], sep = "") # check if there is only one instance and correct the search term
         if(length(grep(searchterm, row.names(sum_tb))) == 0){ # if we still find nothing
-          print(paste("Warning: ", var_list[i], " not found in coda summary output", sep = ""))
-          next
+          searchterm <- paste(utils::glob2rx(var_list[i]), sep = "") # check if user is using *
+          if(length(grep(searchterm, row.names(sum_tb))) == 0){ # if we still find nothing
+            print(paste("Warning: ", var_list[i], " not found in coda summary output", sep = ""))
+            next
+          }
         }
       }
+      
+      voi_list[[j]] <- sum_tb[grep(searchterm, row.names(sum_tb)),1]
+      voi_list[[j+1]] <- quan_tb[grep(searchterm, row.names(quan_tb)),1]
+      voi_list[[j+2]] <- quan_tb[grep(searchterm, row.names(quan_tb)),5]
+      
+      if(is.null(colnams)){
+        
+        column_names[[j]] <- paste("B_", var_list[i], sep = "")
+        column_names[[j+1]] <- paste("pc2.5_", var_list[i], sep = "")
+        column_names[[j+2]] <- paste("pc97.5_", var_list[i], sep = "")
+        
+      }
+      
+      if(!is.null(colnams)){
+        
+        column_names[[j]] <- paste(colnams[i], sep = "")
+        column_names[[j+1]] <- paste("pc2.5_", colnams[i], sep = "")
+        column_names[[j+2]] <- paste("pc97.5_", colnams[i], sep = "")
+        
+      }
+      
+      j = j + 3
+      
     }
+    suppressMessages(out_df <- dplyr::bind_cols(voi_list))
+    colnames(out_df) <- column_names
+    return(out_df)
+  }
+  
+  # If we have already converted the coda object to a tidyverse-style df
+  if(!is.null(df)){
     
-    voi_list[[j]] <- sum_tb[grep(searchterm, row.names(sum_tb)),1]
-    voi_list[[j+1]] <- quan_tb[grep(searchterm, row.names(quan_tb)),1]
-    voi_list[[j+2]] <- quan_tb[grep(searchterm, row.names(quan_tb)),5]
+    #voi_list <- list()
+    #column_names <- list()
+    #j = 1
     
-    if(is.null(colnams)){
+    for(i in c(1:length(var_list))){
       
-      column_names[[j]] <- paste("B_", var_list[i], sep = "")
-      column_names[[j+1]] <- paste("ci2.5_", var_list[i], sep = "")
-      column_names[[j+2]] <- paste("ci97.5_", var_list[i], sep = "")
+      searchterm <- var_list[i]
       
+      # Check if there is more than instance of the variable or not
+      if(length(grep(searchterm, df$var)) == 0){ # if we find nothing
+        print(paste("Warning: ", var_list[i], " not found in df summary output", sep = ""))
+        next
+      }
     }
-    
-    if(!is.null(colnams)){
       
-      column_names[[j]] <- paste(colnams[i], sep = "")
-      column_names[[j+1]] <- paste("ci2.5_", colnams[i], sep = "")
-      column_names[[j+2]] <- paste("ci97.5_", colnams[i], sep = "")
+      df <- df %>%
+        dplyr::filter(var %in% var_list) %>%
+        tidyr::pivot_wider(id_cols = c(ID1, site), names_from = var, values_from = c(mean,median,sd,pc2.5,pc97.5))
       
-    }
-    
-    j = j + 3
+      if(!is.null(to_join)){
+        out_df <- cbind(to_join, df)
+      } else{
+        out_df <- df
+      }
+      
+    #   voi_list[[j]] <- df$mean[grep(searchterm, df$var)]
+    #   voi_list[[j+1]] <- "ID1"
+    #   voi_list[[j+1]] <- df$pc2.5[grep(searchterm, df$var)]
+    #   voi_list[[j+2]] <- df$pc97.5[grep(searchterm, df$var)]
+    #   
+    #   if(is.null(colnams)){
+    #     
+    #     column_names[[j]] <- paste("B_", var_list[i], sep = "")
+    #     column_names[[j+1]] <- "ID1"
+    #     column_names[[j+2]] <- paste("pc2.5_", var_list[i], sep = "")
+    #     column_names[[j+3]] <- paste("pc97.5_", var_list[i], sep = "")
+    #     
+    #   }
+    #   
+    #   if(!is.null(colnams)){
+    #     
+    #     column_names[[j]] <- paste(colnams[i], sep = "")
+    #     column_names[[j+1]] <- "ID1"
+    #     column_names[[j+2]] <- paste("pc2.5_", colnams[i], sep = "")
+    #     column_names[[j+3]] <- paste("pc97.5_", colnams[i], sep = "")
+    #     
+    #   }
+    #   
+    #   j = j + 4
+    #   
+    # }
+    # suppressMessages(out_df <- dplyr::bind_cols(voi_list))
+    # colnames(out_df ) <- column_names
+    return(out_df)
     
   }
-  suppressMessages(df <- dplyr::bind_cols(voi_list))
-  colnames(df) <- column_names
-  return(df)
+  
   
 }
 
@@ -166,6 +230,68 @@ coda_pivot_longer <- function(var_list, coda_sum, colnams = NULL){
   
   
   return(df_longer)
+  
+}
+
+
+sum_timeseries <- function(s){
+  
+  # Create necessary folders if they do not already exist
+  if(!file.exists("output_dfs")) { dir.create("output_dfs")}
+  
+  # key for which site corresponds to which site ID
+  if(s == 1){
+    key = "seg"
+  } else if(s == 2){
+    key = "ses"
+  } else if(s == 3){
+    key = "wjs"
+  } else if(s == 4){
+    key = "mpj"
+  } else if(s == 5){
+    key = "vcp"
+  } else if(s == 6){
+    key = "vcm1"
+  } else if(s == 7){
+    key = "vcm2"
+  } else if(s == 8){
+    key = "vcs"
+  }
+  
+  # Read in summary data
+  dffilename <- paste("./output_dfs/df_sum_", key, ".csv", sep = "")
+  df_sum <- read.csv(dffilename)
+  
+  # Define summary filenames based on key
+  out_daily_dffilename <- paste("./output_dfs/df_daily_", key, ".csv", sep = "")
+  out_weekly_dffilename <- paste("./output_dfs/df_weekly_", key, ".csv", sep = "")
+  out_yearly_dffilename <- paste("./output_dfs/df_yearly_", key, ".csv", sep = "")
+  
+  
+  # Load join data for the correct site/key
+  load(paste("./clean_data/dataIN_",key,".RData",sep=""))
+  load(paste("./clean_data/dataIN_wue_",key,".RData",sep=""))
+  load(paste("./clean_data/dataIN_gpp_",key,".RData",sep=""))
+  
+  # define join df names based on key
+  dataIN <- get(paste("dataIN_",key,sep="")) # daily time series
+  dataIN_wue <- get(paste("dataIN_wue_",key,sep="")) # WUE time series, by block length
+  dataIN_gpp <- get(paste("dataIN_gpp_",key,sep="")) # seasonal time series, for WUE weighted by GPP
+  
+  # Summarize into timeseries format
+  varlist <- c("ET.pred", "ET.rep", "E.model", "T.pred", "T.ratio")
+  daily_df <- coda_rows_to_cols(varlist, coda_sum = NULL, df = df_sum, colnams = NULL, to_join = dataIN)
+  write.csv(daily_df, out_daily_dffilename)
+  
+  varlist <- c("WUE.pred", "WUE.wght")
+  weekly_df <- coda_rows_to_cols(varlist, coda_sum = NULL, df = df_sum, colnams = NULL, to_join = dataIN_wue)
+  
+  write.csv(weekly_df, out_weekly_dffilename)
+  
+  varlist <- c("WUE.annual", "WUE.winter", "WUE.spring", "WUE.summer")
+  yearly_df <- coda_rows_to_cols(varlist, coda_sum = NULL, df = df_sum, colnams = NULL, to_join = dataIN_gpp)
+  
+  write.csv(yearly_df, out_yearly_dffilename)
   
 }
 

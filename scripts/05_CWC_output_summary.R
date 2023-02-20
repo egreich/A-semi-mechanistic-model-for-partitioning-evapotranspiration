@@ -98,12 +98,12 @@ remove(ses_env, seg_env, wjs_env, mpj_env, vcp_env, vcm_env, vcs_env)
 
 ############################### Graph CWC analysis output summary
 
-path_out = "/graphs" # set your output path
+path_out = "/plots" # set your output path
 
 
-site_label_list <- c("seg", "ses", "wjs", "mpj", "vcp", "vcm", "vcs")
-graph_label_list <- c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm", "US-Vcs")
-var_label_list <- c("P", "LAI", "VPD", "SWC", "Tair", "Tsoil", "PAR")
+site_label_list <- c("seg", "ses", "wjs", "mpj", "vcp", "vcm1","vcm2", "vcs")
+graph_label_list <- c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm1","US-Vcm2", "US-Vcs")
+var_label_list <- c("P", "LAI", "VPD", "SWCshall","SWCdeep", "Tair", "Tsoil", "PAR")
 
 
 d_CWC_T_longer = read.csv("/output_CWC/T/d_CWC_T_longer.csv")

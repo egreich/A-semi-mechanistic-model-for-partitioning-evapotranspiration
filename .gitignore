@@ -11,3 +11,4 @@ clean_data/*
 output_CWC/*
 output_coda/*
 output_dfs/*
+plots/*

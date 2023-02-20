@@ -1,33 +1,24 @@
 #!/usr/bin/env Rscript
 
-ETpart <- function(dataIN, dataIN_wue, dataIN_gpp, key, chain=NULL, ECOSTRESS=T){
+get_ETpart_inits <- function(dataIN, dataIN_wue, dataIN_gpp, key, chain=NULL, ECOSTRESS=T){
   
   # Create necessary folders if they do not already exist
-  if(!file.exists("output_coda")) { dir.create("output_coda")}
-  if(!file.exists("output_dfs")) { dir.create("output_dfs")}
   if(!file.exists("models/inits")) { dir.create("models/inits")}
-
+  
   # Define filenames
-  # If not running on an HPC
   if(is.null(chain)){
-    initfilename <- paste("./models/inits/inits_", key, ".RData", sep = "")
-    zcfilename <- paste("./output_coda/coda_all_", key, ".RData", sep = "")
-    dffilename <- paste("./output_dfs/df_sum_", key, ".csv", sep = "")
+  initfilename <- paste("./models/inits/inits_", key, ".RData", sep = "")
     if(ECOSTRESS == F){
       initfilename <- paste("./models/inits/inits_noECO_", key, ".RData", sep = "")
-      zcfilename <- paste("./output_coda/coda_all_noECO_", key, ".RData", sep = "")
-      dffilename <- paste("./output_dfs/df_sum_noECO_", key, ".csv", sep = "")
     }
   }
-  # If running on an HPC, we will run a postscript later to combine chains
+  # If running on an HPC, save the initials by chain number
   if(!is.null(chain)){
-    initfilename <- paste("./models/inits/inits_", chain,"_", key, ".RData", sep = "")
-    zcfilename <- paste("./output_coda/zc_", chain,"_", key, ".RData", sep = "")
+    initfilename <- paste("./models/inits/inits_", chain,"_",key, ".RData", sep = "")
     if(ECOSTRESS == F){
       initfilename <- paste("./models/inits/inits_noECO_", chain,"_", key, ".RData", sep = "")
-      zcfilename <- paste("./output_coda/zc_noECO_", chain,"_", key, ".RData", sep = "")
     }
-  }
+  } 
   
   Nblocks = length(unique(dataIN$block))
   N = nrow(dataIN)
@@ -78,14 +69,13 @@ ETpart <- function(dataIN, dataIN_wue, dataIN_gpp, key, chain=NULL, ECOSTRESS=T)
               end.summer = dataIN_gpp$end.summer,
               end.postmonsoon = dataIN_gpp$end.postmonsoon)
   
-  # If running the vcp site, run the split model to account for data gaps
   if(key == "vcp"){
     data = list(Nblocks   = Nblocks, # Number of blocks, of n days each
                 N = N, # Number of rows
                 Nblocksplit = 243, # the index of the last block before the data gap
                 Nyear = Nyear,
                 block = dataIN$block,
-                WUE.ecostress = dataIN_wue$WUE,
+                #WUE.ecostress = dataIN_wue$WUE,
                 Esnow = dataIN$Esnow,
                 Tsoil = dataIN$Tsoil,
                 S = dataIN$S,
@@ -227,13 +217,36 @@ ETpart <- function(dataIN, dataIN_wue, dataIN_gpp, key, chain=NULL, ECOSTRESS=T)
     
   }
   
-  ### Step 2: Initialize the model
   
-  # Load initial values from previous run
-  load(initfilename)
+  
+  #####################################################################
+  # Part 2: Initialize JAGS Model
+  
+  inits = list(list(tau.ET = 1/(sd(dataIN$ET)**2), #pink
+                    sig.WUE = 9,
+                    sig.ecostress = 5),
+               list(tau.ET = (1/(sd(dataIN$ET)**2))/10, #green
+                    sig.WUE = 5,
+                    sig.ecostress = 7/2),
+               list(tau.ET = (1/(sd(dataIN$ET)**2))*10, #blue
+                    sig.WUE = 15,
+                    sig.ecostress = 9))
+  
+  if(ECOSTRESS == F){ # If not includiing ECOSTRESS, set initials for mean WUE
+    inits = list(list(tau.ET = 1/(sd(dataIN$ET)**2), #pink
+                      sig.WUE = 9),
+                 list(tau.ET = (1/(sd(dataIN$ET)**2))/10, #green
+                      sig.WUE = 5),
+                 list(tau.ET = (1/(sd(dataIN$ET)**2))*10, #blue
+                      sig.WUE = 15))
+  }
+  
+  # If running on an HPC, make inits 1 chain corresponding to the chain number
+  if(!is.null(chain)){
+    inits = inits[[chain]]
+  }
   
   n.adapt  = 5000
-  
   n.chains = 3
   # If running on an HPC, make n.chains=1
   if(!is.null(chain)){
@@ -247,161 +260,68 @@ ETpart <- function(dataIN, dataIN_wue, dataIN_gpp, key, chain=NULL, ECOSTRESS=T)
     model.name <- ifelse(key != "vcp", "./models/DEPART_model_noECO.R", "./models/DEPART_model_noECO_split.R")
   }
   
-    jm1.b=jags.model(model.name,
-                     data=data,
-                     n.chains=n.chains,
-                     n.adapt=n.adapt,
-                     inits = saved.state[[2]])
-
   
-  ### Step 3: Once the model is initialized, it's time to run the model
+  jm1.b=jags.model(model.name,
+                   data=data,
+                   n.chains=n.chains,
+                   n.adapt=n.adapt,
+                   inits = inits)
   
-  load.module("dic") #This is a measure of deviance, which helps determine the best model option if comparing 2 or more models
+  #####################################################################
+  #Part 3: Run coda.samples with JAGS model
+  
+  # Choose the number of iterations
+  n.iter = 1000
   
   # Choose the parameters to monitor. 
+  params = c("tau.ET", "sig.WUE", "sig.ecostress")
   
-  n.iter = 25000
+  if(ECOSTRESS == F){params = c("tau.ET", "sig.WUE")}
   
-  params = c("ET", "E.model", "ET.pred", "ET.rep", "T.pred", "T.ratio",
-             "WUE.annual","WUE.overall.annual", "WUE.overall.postmonsoon",
-             "WUE.overall.spring","WUE.overall.summer", "WUE.overall.winter",
-             "WUE.postmonsoon", "WUE.pred", "WUE.spring","WUE.summer", "WUE.wght", "WUE.winter",
-             'bch.pred', "deviance", 'fc.pred', 'k.pred', "p", 'psisat.pred', "sig.ET","sig.WUE", 
-             "sig.ecostress", "slope", 'ssat.pred', 'sres.pred', "tau.ecostress", 'vk.pred')
-  
-  
+  start<-proc.time()
   zc1 = coda.samples(jm1.b,variable.names=params,
                      n.iter=n.iter,thin = 1)
+  end<-proc.time()
+  elapsed<- (end-start)/(60*60)
+  print("coda.samples done running; hours to completion:")
+  print(elapsed[3])
   
-  save(zc1, file = zcfilename)  # save the model output for graphs
+  #####################################################################
+  # Part 4: Check diagnostics
+  
+  #plotting to visualize chains, diagnose convergence issues, etc
+  #mcmcplot(zc1)
+  
+  #check convergence via gelman diagnostics, psrf should be <1.2
+  #gel<-gelman.diag(zc1, multivariate = F)
+  #print(gel)
+  
+  #check how much to run
+  #raft<-raftery.diag(zc1)
+  #raft<-maxraft(chains=3,coda=zc1) #find the min number of iterations needed per chain
+  #print(raft)
   
   #####################################################################
   # Part 5: Save inits for future runs
   
   # inits to save
-  #init_names = c("tau.ET","sig.WUE","sig.ecostress")
+  #init_names = c("beta0","beta1","beta1a","beta2", "sig")
   
-  # variables to remove
-  #get_remove_index <- function(to_keep, list){
-  #   out_list <- c()
-  #   for(j in c(1:length(list))){
-  #     if(list[j] %in% to_keep){
-  #       out_list[j] = NA
-  #     } else{
-  #       out_list[j] = j
-  #     }
-  #   }
-  #   out_list <- out_list[!is.na(out_list)]
-  #   out_list
-  # }
-  
+  # find which variables in the coda object to remove
   #remove_vars = get_remove_index(init_names, params)
   
-  #extract final iteration to reinitialize model if needed
-  #newinits<-initfind(zc1, OpenBUGS = F)
-  #remove non-root node variables
-  #saved.state <- removevars(initsin = newinits, variables=remove_vars) # remove non-variable nodes
-  #check both items in list
-  #save(saved.state, file=initfilename)
+  #extract final iteration to reinitialize model
+  newinits<-initfind(zc1, OpenBUGS = F)
+  #newinits[[1]]
   
-  #####################################################################
-  ###  Make site-specific data frames if not running on HPC
-  if(is.null(chain)){
-  sumzc <- summary(zc1)
   
-  # Extract mean and 2.5 and 97.5 quantiles from summary tables
+  #saved.state <- removevars(initsin = newinits, variables = remove_vars) # remove non-root nodes
+  saved.state <- newinits # if nothing needs to be removed
   
-  # Function to extract posterior means, and 2.5 and 97.5 CI quantiles
-  # takes a list of variable names and the coda summary
-  # all variables in the list MUST have the same length posterior outputs
-  # Similar version called coda_to_rows available in the coda4dummies package via devtools::install_github("egreich/coda4dummies")
-  get_coda_rows_to_cols <- function(var_list, coda_sum){
-    
-    sum_tb <- coda_sum[["statistics"]]
-    quan_tb <- coda_sum[["quantiles"]]
-    
-    voi_list <- list()
-    column_names <- list()
-    j = 1
-    
-    for(i in c(1:length(var_list))){
-      
-      searchterm <- paste("^", var_list[i], "\\[", sep = "")
-      
-      # Check if there is more than instance of the variable or not
-      if(length(grep(searchterm, row.names(sum_tb))) == 0){ # if we find nothing
-        searchterm <- paste("^", var_list[i], sep = "") # check if there is only one instance and correct the search term
-        if(length(grep(searchterm, row.names(sum_tb))) == 0){ # if we still find nothing
-          print(paste("Warning: ", var_list[i], " not found in coda summary output", sep = ""))
-          next
-        }
-      }
-      
-      voi_list[[j]] <- sum_tb[grep(searchterm, row.names(sum_tb)),1]
-      voi_list[[j+1]] <- quan_tb[grep(searchterm, row.names(quan_tb)),1]
-      voi_list[[j+2]] <- quan_tb[grep(searchterm, row.names(quan_tb)),5]
-      
-      column_names[[j]] <- paste("B_", var_list[i], sep = "")
-      column_names[[j+1]] <- paste("cred2.5_", var_list[i], sep = "")
-      column_names[[j+2]] <- paste("cred97.5_", var_list[i], sep = "")
-      
-      j = j + 3
-      
-    }
-    suppressMessages(df <- dplyr::bind_cols(voi_list))
-    colnames(df) <- column_names
-    return(df)
-    
-  }
+  #check items in list
+  #saved.state[[1]]
   
-  sumzc <- summary(coda_all) # coda summary
+  # Save initials
+  save(saved.state, file=initfilename) 
   
-  varlist <- c("ET", "ET.pred", "ET.rep", "E.model", "T.pred", "T.ratio") #, "S.corr"
-  daily_df <- get_coda_rows_to_cols(varlist, sumzc)
-  
-  d_B_output <- cbind(dataIN, daily_df)
-  
-  varlist <- c("WUE.pred", "WUE.wght")
-  weekly_df <- get_coda_rows_to_cols(varlist, sumzc)
-  
-  d_B_wue_output <- cbind(dataIN_wue, weekly_df)
-  
-  varlist <- c("WUE.annual", "WUE.winter", "WUE.spring", "WUE.summer")
-  yearly_df <- get_coda_rows_to_cols(varlist, sumzc)
-  
-  d_B_gpp_output <- cbind(dataIN_gpp, yearly_df)
-  
-  varlist <- c("WUE.overall.annual", "WUE.overall.winter", "WUE.overall.spring", "WUE.overall.summer", "WUE.overall.postmonsoon")
-  d_B_wue.overall_output <- get_coda_rows_to_cols(varlist , sumzc)
-  
-  if(ECOSTRESS == T){
-    write.csv(d_B_output, paste("./output_dfs/d_B_",key,".csv",sep=""), row.names = F)
-    write.csv(d_B_wue_output, "./output_dfs/d_B_wue_", key,".csv", row.names = F)
-    write.csv(d_B_gpp_output, "./output_dfs/d_B_gpp_", key,".csv", row.names = F)
-    write.csv(d_B_wue.overall_output, "./output_dfs/d_B_wue.overall_", key,".csv", row.names = F)
-  } else if(ECOSTRESS == F){
-    write.csv(d_B_output, paste("./output_dfs/d_B_noECO_",key,".csv",sep=""), row.names = F)
-    write.csv(d_B_wue_output, "./output_dfs/d_B_wue_noECO_", key,".csv", row.names = F)
-    write.csv(d_B_gpp_output, "./output_dfs/d_B_gpp_noECO_", key,".csv", row.names = F)
-    write.csv(d_B_wue.overall_output, "./output_dfs/d_B_wue.overall_noECO_", key,".csv", row.names = F)
-  }
-  
-  # Summarizing chains via Mike Fell's code
-  df_sum <- coda.fast(chains=3, burn.in=0, thin=1, coda=coda_all)
-  df_sum <- rownames_to_column(df_sum, "var")
-  df_sum <- df_sum %>% # make index column
-    mutate(ID = sub('.*\\[(.*)\\]', '\\1', df_sum$var))
-  df_sum <- df_sum %>% # separate index column into 1st and 2nd dimension
-    mutate(ID1 = sub('(.*)\\,.*', '\\1', df_sum$ID),
-           ID2 = sub('.*\\,(.*)', '\\1', df_sum$ID))
-  df_sum$ID2 <- ifelse(!grepl(',', df_sum$ID), NA, df_sum$ID2) # get rid of ID2 if there's no 2nd dimension
-  df_sum$ID1 <- ifelse(!grepl('[^[:alpha:]]', df_sum$ID), 1, df_sum$ID1) # make ID1=1 if there is only 1 instance
-  df_sum <- df_sum %>% 
-    mutate(var = sub('(.*)\\[.*', '\\1', df_sum$var)) # get rid of numbers in var col
-  df_sum <- df_sum %>% 
-    select("var","ID1","ID2","mean","median","sd","pc2.5","pc97.5") %>% #reorder columns, drop ID
-    mutate(site = key)
-  
-  write.csv(df_sum, dffilename)
-  }
 }

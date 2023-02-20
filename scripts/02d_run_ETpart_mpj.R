@@ -7,10 +7,15 @@
 library(rjags)
 library(tidyverse)
 
+source("./scripts/ETpart_initialize_function.R")
 source("./scripts/ETpart_function.R")
 load("./clean_data/dataIN_mpj.RData")
 load("./clean_data/dataIN_wue_mpj.RData")
 load("./clean_data/dataIN_gpp_mpj.RData")
+
+get_ETpart_inits(dataIN_mpj, dataIN_wue_mpj, dataIN_gpp_mpj, "mpj", ECOSTRESS=F)
+
+ETpart(dataIN_mpj, dataIN_wue_mpj, dataIN_gpp_mpj, "mpj", ECOSTRESS=F)
 
 output <- ETpart(dataIN_mpj, dataIN_wue_mpj, dataIN_gpp_mpj, "mpj")
 

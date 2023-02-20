@@ -7,10 +7,6 @@
 #SBATCH --mail-type=all
 #SBATCH --mail-user=egr65@nau.edu
 
-#module load R/4.0.2
-#module load jags
-#export PKG_CONFIG_PATH=/packages/jags/4.3.0/lib/pkgconfig
-#pkg-config ––modversion jags
 
-chmod +x 03_CWC_analysis.R
-srun 03_CWC_analysis.R
+chmod +x 04_CWC_analysis.R
+srun 04_CWC_analysis.R

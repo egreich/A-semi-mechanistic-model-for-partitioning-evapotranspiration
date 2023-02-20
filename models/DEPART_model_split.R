@@ -63,7 +63,9 @@ model{
     # Note the proportionality term (slope) varies temporally, according to defined 
     # time "blocks".
     T.pred[i] <- slope[block[i]]*GPP[i]
-    T.ratio[i] <- T.pred[i]/ET[i]
+    # T/ET ratio
+    ET.int[i] <- ifelse(ET.pred[i]==0, 0.0000000000000001, ET.pred[i]) # intermediate calculated to ensure the denominator is not 0
+    T.ratio[i] <- ifelse(ET.pred[i]==0, 0, T.pred[i]/ET.int[i])
   }
   
   # Intercepted E
@@ -78,21 +80,30 @@ model{
   # Set a new S.min
   #S.min.corr <- c1 + c2 * S.min
   
-
-  # for each time block
-  for(i in 1:Nblocks){
+  for(i in 1:Nblocks){ # for each time block
     # slope is the inverse water-use efficiency
     slope[i] <- 1/WUE.pred[i]
   }
   # Priors for "initial conditions" for WUE.
-  WUE.pred[1] ~ dunif(0,30) # was 10
+  WUE.pred[1] ~ dunif(0,30)
+  WUE.pred[Nblocksplit+1] ~ dunif(0,30)
   #WUE.wght[1] ~ dunif(0,30)
   WUE.wght[1] <- WUE.pred[1]*GPP.avg[1]
-  # UNITS for WUE from Ecostress?
-  WUE.ecostress[1] ~ dunif(0,30) # was 10
-  for(i in 2:Nblocks){
+  WUE.wght[Nblocksplit+1] <- WUE.pred[Nblocksplit+1]*GPP.avg[Nblocksplit+1]
+  WUE.ecostress[1] ~ dunif(0,30)
+  WUE.ecostress[Nblocksplit+1] ~ dunif(0,30)
+  for(i in 2:Nblocksplit){
     # This assumes that the precision for the "predicted" or "true" WUE of the site varies
-    # around the WUE derived from ECOSTRESS for that area, with some uncertainty
+    # around the precision for WUE derived from ECOSTRESS for that area, with some uncertainty
+    WUE.pred[i] ~ dnorm(WUE.pred[i-1], tau.ecostress)T(0,)
+    WUE.wght[i] <- WUE.pred[i]*GPP.avg[i]
+    # Likelihood for observed (and missing) WUE from ECOSTRESS.
+    # Model below also assumes each time block is of equal length (e.g., weekly)
+    WUE.ecostress[i] ~ dnorm(WUE.ecostress[i-1], tau.ecostress)T(0,)
+  }
+  for(i in (Nblocksplit+2):Nblocks){
+    # This assumes that the precision for the "predicted" or "true" WUE of the site varies
+    # around the precision for WUE derived from ECOSTRESS for that area, with some uncertainty
     WUE.pred[i] ~ dnorm(WUE.pred[i-1], tau.ecostress)T(0,)
     WUE.wght[i] <- WUE.pred[i]*GPP.avg[i]
     # Likelihood for observed (and missing) WUE from ECOSTRESS.
@@ -137,7 +148,6 @@ model{
   sres.pred ~ dnorm(sres, 80000)T(0,S.min)# residual soil moisture
   # Plot ssat to see what the range is
   ssat.pred ~ dnorm(ssat, 50)T(0,) # soil moisture at saturation
-  #check this equation- it gives negative numbers when fsand is above .38, which is weird (should it be positive???)
   psisat.pred ~ dnorm(psisat, 0.015)T(-1000,0)  # parameterized air entry pressure, in mm of water, check equation and limits
   
   # Priors to scale SWC
