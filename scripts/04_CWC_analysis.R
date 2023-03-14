@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 
 ###########################################################################################
-######################### Create CWC graphs from ETpart model output ######################
+######################### Create CWC graphs from DEPART model output ######################
 ###########################################################################################
 
 library(tidyverse)
@@ -21,30 +21,7 @@ if(!file.exists("output_CWC/WUE/graphs")) { dir.create("output_CWC/WUE/graphs")}
 if(!file.exists("output_CWC/T/graphs")) { dir.create("output_CWC/T/graphs")}
 if(!file.exists("output_CWC/T_ratio/graphs")) { dir.create("output_CWC/T_ratio/graphs")}
 
-
-# d_B_ses = read.csv("/output_dfs/d_B_ses.csv")
-# d_B_ses$date <- paste(d_B_ses$year, d_B_ses$month, d_B_ses$day, sep="-") %>% ymd() %>% as.Date()
-# d_B_seg = read.csv("/output_dfs/d_B_seg.csv")
-# d_B_seg$date <- as.Date(d_B_seg$date,"%Y-%m-%d")
-# d_B_wjs = read.csv("/output_dfs/d_B_wjs.csv")
-# d_B_wjs$date <- as.Date(d_B_wjs$date,"%Y-%m-%d")
-# d_B_mpj = read.csv("/output_dfs/d_B_mpj.csv")
-# d_B_mpj$date <- as.Date(d_B_mpj$date,"%Y-%m-%d")
-# d_B_vcp = read.csv("/output_dfs/d_B_vcp.csv")
-# d_B_vcp$date <- as.Date(d_B_vcp$date,"%Y-%m-%d")
-# d_B_vcm = read.csv("/output_dfs/d_B_vcm.csv")
-# d_B_vcm$date <- as.Date(d_B_vcm$date,"%Y-%m-%d")
-# d_B_vcs = read.csv("/output_dfs/d_B_vcs.csv")
-# d_B_vcs$date <- as.Date(d_B_vcs$date,"%Y-%m-%d")
-# 
-# 
-# d_B_wue_ses = read.csv("/output_dfs/d_B_wue_ses.csv")
-# d_B_wue_seg = read.csv("/output_dfs/d_B_wue_seg.csv")
-# d_B_wue_wjs = read.csv("/output_dfs/d_B_wue_wjs.csv")
-# d_B_wue_mpj = read.csv("/output_dfs/d_B_wue_mpj.csv")
-# d_B_wue_vcp = read.csv("/output_dfs/d_B_wue_vcp.csv")
-# d_B_wue_vcm = read.csv("/output_dfs/d_B_wue_vcm.csv")
-# d_B_wue_vcs = read.csv("/output_dfs/d_B_wue_vcs.csv")
+# Load model output files
 key <- c("seg", "ses", "wjs", "mpj", "vcp", "vcm1","vcm2", "vcs")
 for(i in c(1:8)){
   filename <- paste("./clean_data/dataIN_", key[i], ".RData", sep="")
@@ -55,14 +32,14 @@ for(i in c(1:8)){
   load(filename)
 }
 
-d_list <- list()
+d_T_list <- list()
 for(i in c(1:8)){
   filename <- paste("./clean_data/dataIN_", key[i], ".RData", sep="")
   load(filename)
   d_IN <- get(paste("dataIN_",key[i],sep=""))
   filename <- paste("./output_dfs/df_sum_", key[i], ".csv", sep="")
   d_temp <- read.csv(filename)
-  d_list[[i]] <- d_IN %>%
+  d_T_list[[i]] <- d_IN %>%
     mutate(B_T = d_temp$mean[d_temp$var == "T.pred"],
            T_ratio = d_temp$mean[d_temp$var == "T.ratio"])
 }
@@ -74,28 +51,35 @@ for(i in c(1:8)){
   filename <- paste("./output_dfs/df_sum_", key[i], ".csv", sep="")
   d_temp <- read.csv(filename)
   d_wue_list[[i]] <- d_IN %>%
-    mutate(B_T = d_temp$mean[d_temp$var == "WUE.pred"])
+    mutate(B_WUE = d_temp$mean[d_temp$var == "WUE.pred"])
 }
 
+# Key to determine which chunks to run
+# 0 means don't run, 1 means run but don't make graphs, 2 means run and make graphs
+testWUE=2
+testT=0
+testT_ratio=0
 
 
 ##############################################################################################################
 #################################### Cross-wavelet coherence for WUE LOOP ####################################
 ##############################################################################################################
+if(testWUE > 0){
 site_label_list <- c("seg", "ses", "wjs", "mpj", "vcp", "vcm1","vcm2", "vcs")
 graph_label_list <- c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm1", "US-Vcm2", "US-Vcs")
 d_list <- d_wue_list
-#var_list <- c("P_total", "LAI_mod", "VPD", "S", "Tair", "Tsoil", "PPFD_IN")
 var_list <- c(7, 9:11, 13:16)
-var_label_list <- c("P", "LAI", "VPD", "SWC", "Tair", "Tsoil", "PAR")
+var_label_list <- c("P", "LAI", "VPD", "SWCshall","SWCdeep","Tair", "Tsoil", "PAR") # var_label_list <- c("VPD", "P", "Tair", "PAR", "SWCshall","SWCdeep", "Tsoil", "LAI")
 
 
 sublist3 <- list() # biwavelet level
 sublist2 <- list(sublist3, sublist3, sublist3, sublist3, sublist3, sublist3, sublist3) # var level
 names(sublist2) <- var_label_list # name variables
-wtc.mat <- list(sublist2, sublist2, sublist2, sublist2, sublist2, sublist2, sublist2) # site level
+wtc.mat <- list(sublist2, sublist2, sublist2, sublist2, sublist2, sublist2, sublist2, sublist2) # site level
 names(wtc.mat) <- site_label_list
 list_var_rsq <- list()
+list_max_rsq <- list()
+list_min_rsq <- list()
 list_sd_rsq <- list()
 list_var_phase <- list()
 list.site <- list()
@@ -121,6 +105,7 @@ for(i in c(1:8)){ # site level
     
     temp.period <- wtc.AB$period # take the longest period
     temp.rsq <- as.data.frame(wtc.AB$rsq)
+    temp.rsq.mat <- as.matrix(wtc.AB$rsq)
     temp.phase <- as.data.frame(wtc.AB$phase)
     temp.signif <- as.data.frame(wtc.AB$signif)
     #test <- as.data.frame(wtc.AB$coi)
@@ -144,7 +129,8 @@ for(i in c(1:8)){ # site level
     list_var_phase[[k]] <- temp.avg.phase # will take avg of phases
     
     # Plotting a graph
-     png(paste("/WUE/graphs/p_", site_label_list[i], "_", var_label_list[k], "_WUE", ".png",sep=""), width = 900, height = 700)
+    if(testWUE==2){
+     png(paste("./output_CWC/WUE/graphs/p_", site_label_list[i], "_", var_label_list[k], "_WUE", ".png",sep=""), width = 900, height = 700)
      
      par(oma = c(0, 0, 0, 1), mar = c(5, 4, 5, 5) + 0.1)
      plot(wtc.AB, plot.phase = TRUE, lty.coi = 1, col.coi = "grey", lwd.coi = 2,
@@ -165,10 +151,10 @@ for(i in c(1:8)){ # site level
        axis(side = 3, at = c(seq(0, n, 52)), labels = c(seq(2009, 2021, 1)))
      }
      if(i == 6){ # vcm1
-       axis(side = 3, at = c(seq(0, n, 52)), labels = c(2009,2010,2011,2012))
+       axis(side = 3, at = c(seq(0, n, 52)), labels = c(2009,2010,2011,2012,2013))
      }
      if(i == 7){ # vcm2
-       axis(side = 3, at = c(seq(0, n, 52)), labels = c(2014,2015,2016,2017,2018,2019,2020,2021))
+       axis(side = 3, at = c(seq(0, n, 52)), labels = c(2014,2015,2016,2017,2018,2019,2020))
      }
      if(i == 8){ # vcs
        axis(side = 3, at = c(seq(0, n, 52)), labels = c(seq(2017, 2021, 1)))
@@ -178,6 +164,7 @@ for(i in c(1:8)){ # site level
      }
 
      dev.off()
+    }
     k = k + 1 
   }
   
@@ -187,91 +174,101 @@ for(i in c(1:8)){ # site level
                                P = list_var_rsq[[1]],
                                LAI = list_var_rsq[[2]],
                                VPD = list_var_rsq[[3]],
-                               SWC = list_var_rsq[[4]],
-                               Tair = list_var_rsq[[5]],
-                               Tsoil = list_var_rsq[[6]],
-                               PAR = list_var_rsq[[7]],
+                               SWCshall = list_var_rsq[[4]],
+                               SWCdeep = list_var_rsq[[5]],
+                               Tair = list_var_rsq[[6]],
+                               Tsoil = list_var_rsq[[7]],
+                               PAR = list_var_rsq[[8]],
                                P.sd = list_sd_rsq[[1]],
                                LAI.sd = list_sd_rsq[[2]],
                                VPD.sd = list_sd_rsq[[3]],
-                               SWC.sd = list_sd_rsq[[4]],
-                               Tair.sd = list_sd_rsq[[5]],
-                               Tsoil.sd = list_sd_rsq[[6]],
-                               PAR.sd = list_sd_rsq[[7]],
+                               SWCshall.sd = list_sd_rsq[[4]],
+                               SWCdeep.sd = list_sd_rsq[[5]],
+                               Tair.sd = list_sd_rsq[[6]],
+                               Tsoil.sd = list_sd_rsq[[7]],
+                               PAR.sd = list_sd_rsq[[8]],
                                P.phase.avg = list_var_phase[[1]],
                                LAI.phase.avg = list_var_phase[[2]],
                                VPD.phase.avg = list_var_phase[[3]],
-                               SWC.phase.avg = list_var_phase[[4]],
-                               Tair.phase.avg = list_var_phase[[5]],
-                               Tsoil.phase.avg = list_var_phase[[6]],
-                               PAR.phase.avg = list_var_phase[[7]])
+                               SWCshall.phase.avg = list_var_phase[[4]],
+                               SWCdeep.phase.avg = list_var_phase[[5]],
+                               Tair.phase.avg = list_var_phase[[6]],
+                               Tsoil.phase.avg = list_var_phase[[7]],
+                               PAR.phase.avg = list_var_phase[[8]])
   
 }
 d_CWC_WUE <- bind_rows(list.site)
-d_CWC_WUE_longer <- pivot_longer(d_CWC_WUE, cols = c(3:9), names_to = "var", values_to = "rsq.avg")
+# pivot longer
+d_CWC_WUE_longer <- pivot_longer(d_CWC_WUE, cols = c(3:10), names_to = "var", values_to = "rsq.avg")
+d_CWC_WUE_longer_sd <- pivot_longer(d_CWC_WUE, cols = c(11:18), names_to = "var", values_to = "sd")
+d_CWC_WUE_longer_phase <- pivot_longer(d_CWC_WUE, cols = c(19:26), names_to = "var", values_to = "phase")
+d_CWC_WUE_longer <- d_CWC_WUE_longer %>%
+  select(site,period,var,rsq.avg) %>%
+  mutate(sd = d_CWC_WUE_longer_sd$sd, phase = d_CWC_WUE_longer_phase$phase)
 
-# pivot_longer sds
-temp <- c()
-var_list <- c("P", "LAI", "VPD", "SWC", "Tair", "Tsoil", "PAR")
-col_list <-c("P.s", "LAI.s", "VPD.s", "SWC.s", "Tair.s", "Tsoil.s", "PAR.s")
-for( i in c(1:length(var_list))){
-  for( j in c(1:nrow(d_CWC_WUE_longer))){
-    
-    # if the var name in the df row matches i
-    # then assign the correct sd value to temp
-    if(grepl(var_list[i],d_CWC_WUE_longer$var[j])){
-      temp2 <- select(d_CWC_WUE_longer,contains(col_list[i]))[j,]
-      temp[[j]] <- as.numeric(temp2)
-    }
-    
-  }
-}
-d_CWC_WUE_longer <- d_CWC_WUE_longer %>% 
-  mutate(sd = temp) %>%
-  select(-contains(col_list))
-
-# pivot_longer phases
-temp <- c()
-var_list <- c("P", "LAI", "VPD", "SWC", "Tair", "Tsoil", "PAR")
-col_list <-c("P.p", "LAI.p", "VPD.p", "SWC.p", "Tair.p", "Tsoil.p", "PAR.p")
-for( i in c(1:length(var_list))){
-  for( j in c(1:nrow(d_CWC_WUE_longer))){
-    
-    # if the var name in the df row matches i
-    # then assign the correct sd value to temp
-    if(grepl(var_list[i],d_CWC_WUE_longer$var[j])){
-      temp2 <- select(d_CWC_WUE_longer,contains(col_list[i]))[j,]
-      temp[[j]] <- as.numeric(temp2)
-    }
-    
-  }
-}
-d_CWC_WUE_longer <- d_CWC_WUE_longer %>% 
-  mutate(phase = temp) %>%
-  select(-contains(col_list))
+# # pivot_longer sds
+# temp <- c()
+# var_list <- c("P", "LAI", "VPD", "SWC", "Tair", "Tsoil", "PAR")
+# col_list <-c("P.s", "LAI.s", "VPD.s", "SWC.s", "Tair.s", "Tsoil.s", "PAR.s")
+# for( i in c(1:length(var_list))){
+#   for( j in c(1:nrow(d_CWC_WUE_longer))){
+#     
+#     # if the var name in the df row matches i
+#     # then assign the correct sd value to temp
+#     if(grepl(var_list[i],d_CWC_WUE_longer$var[j])){
+#       temp2 <- select(d_CWC_WUE_longer,contains(col_list[i]))[j,]
+#       temp[[j]] <- as.numeric(temp2)
+#     }
+#     
+#   }
+# }
+# d_CWC_WUE_longer <- d_CWC_WUE_longer %>% 
+#   mutate(sd = temp) %>%
+#   select(-contains(col_list))
+# 
+# # pivot_longer phases
+# temp <- c()
+# var_list <- c("P", "LAI", "VPD", "SWC", "Tair", "Tsoil", "PAR")
+# col_list <-c("P.p", "LAI.p", "VPD.p", "SWC.p", "Tair.p", "Tsoil.p", "PAR.p")
+# for( i in c(1:length(var_list))){
+#   for( j in c(1:nrow(d_CWC_WUE_longer))){
+#     
+#     # if the var name in the df row matches i
+#     # then assign the correct sd value to temp
+#     if(grepl(var_list[i],d_CWC_WUE_longer$var[j])){
+#       temp2 <- select(d_CWC_WUE_longer,contains(col_list[i]))[j,]
+#       temp[[j]] <- as.numeric(temp2)
+#     }
+#     
+#   }
+# }
+# d_CWC_WUE_longer <- d_CWC_WUE_longer %>% 
+#   mutate(phase = temp) %>%
+#   select(-contains(col_list))
 
 d_CWC_WUE_longer$sd <- as.numeric(d_CWC_WUE_longer$sd)
 d_CWC_WUE_longer$phase <- as.numeric(d_CWC_WUE_longer$phase)
-d_CWC_WUE_longer$site <- factor(d_CWC_WUE_longer$site, levels = site_label_list, labels = c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm", "US-Vcs"))
-write.csv(d_CWC_WUE_longer,"/output_CWC/WUE/d_CWC_WUE_longer.csv", row.names = F)
-save(wtc.mat, file = "/output_CWC/WUE/wtc.WUE.RData")
+d_CWC_WUE_longer$site <- factor(d_CWC_WUE_longer$site, levels = site_label_list, labels = c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm1", "US-Vcm2", "US-Vcs"))
+write.csv(d_CWC_WUE_longer,"./output_CWC/WUE/d_CWC_WUE_longer.csv", row.names = F)
+save(wtc.mat, file = "./output_CWC/WUE/wtc.WUE.RData")
 graphics.off()
-
+}
 
 ##############################################################################################################
 #################################### Cross-wavelet coherence for T LOOP ####################################
 ##############################################################################################################
+if(testT>0){
 site_label_list <- c("seg", "ses", "wjs", "mpj", "vcp", "vcm1","vcm2", "vcs")
 graph_label_list <- c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm1", "US-Vcm2", "US-Vcs")
-d_list <- d_list
+d_list <- d_T_list
 var_list <- c(9:11, 14:15, 17:18, 20)
 var_label_list <- c("VPD", "P", "Tair", "PAR", "SWCshall","SWCdeep", "Tsoil", "LAI")
 
 
 sublist3 <- list() # biwavelet level
-sublist2 <- list(sublist3, sublist3, sublist3, sublist3, sublist3, sublist3, sublist3) # var level
+sublist2 <- list(sublist3, sublist3, sublist3, sublist3, sublist3, sublist3, sublist3, sublist3) # var level
 names(sublist2) <- var_label_list # name variables
-wtc.mat <- list(sublist2, sublist2, sublist2, sublist2, sublist2, sublist2, sublist2) # site level
+wtc.mat <- list(sublist2, sublist2, sublist2, sublist2, sublist2, sublist2, sublist2, sublist2) # site level
 names(wtc.mat) <- site_label_list
 list_var_rsq <- list()
 list_sd_rsq <- list()
@@ -322,7 +319,8 @@ for(i in c(1:8)){ # site level
     list_var_phase[[k]] <- temp.avg.phase # will take avg of phases
     
     # Plotting a graph
-     png(paste("/T/graphs/p_", site_label_list[i], "_", var_label_list[k], "_T", ".png",sep=""), width = 900, height = 700)
+    if(testT==2){
+     png(paste("./output_CWC/T/graphs/p_", site_label_list[i], "_", var_label_list[k], "_T", ".png",sep=""), width = 900, height = 700)
      
      par(oma = c(0, 0, 0, 1), mar = c(5, 4, 5, 5) + 0.1)
      plot(wtc.AB, plot.phase = TRUE, lty.coi = 1, col.coi = "grey", lwd.coi = 2, 
@@ -343,10 +341,10 @@ for(i in c(1:8)){ # site level
       axis(side = 3, at = c(seq(0, n, 365)), labels = c(seq(2009, 2021, 1)))
     }
     if(i == 6){ # vcm1
-      axis(side = 3, at = c(seq(0, n, 365)), labels = c(2009,2010,2011,2012))
+      axis(side = 3, at = c(seq(0, n, 365)), labels = c(2009,2010,2011,2012,2013))
     }
     if(i == 7){ # vcm2
-      axis(side = 3, at = c(seq(0, n, 365)), labels = c(2014,2015,2016,2017,2018,2019,2020,2021))
+      axis(side = 3, at = c(seq(0, n, 365)), labels = c(2014,2015,2016,2017,2018,2019,2020))
     }
     if(i == 8){ # vcs
       axis(side = 3, at = c(seq(0, n, 365)), labels = c(seq(2017, 2021, 1)))
@@ -356,99 +354,72 @@ for(i in c(1:8)){ # site level
      }
     
      dev.off()
+    }
     k = k + 1 
   }
-  
-  #var_label_list <- c("VPD", "P", "Tair", "PAR", "SWC","Tsoil", "LAI")
+
+  #var_label_list <- c("VPD", "P", "Tair", "PAR", "SWCshall","SWCdeep", "Tsoil", "LAI")
   list.site[[i]] <- data.frame(site = site_label_list[i],
                                period = temp.period, 
-                               P = list_var_rsq[[1]],
-                               LAI = list_var_rsq[[2]],
-                               VPD = list_var_rsq[[3]],
-                               SWC = list_var_rsq[[4]],
-                               Tair = list_var_rsq[[5]],
-                               Tsoil = list_var_rsq[[6]],
-                               PAR = list_var_rsq[[7]],
-                               P.sd = list_sd_rsq[[1]],
-                               LAI.sd = list_sd_rsq[[2]],
-                               VPD.sd = list_sd_rsq[[3]],
-                               SWC.sd = list_sd_rsq[[4]],
-                               Tair.sd = list_sd_rsq[[5]],
-                               Tsoil.sd = list_sd_rsq[[6]],
-                               PAR.sd = list_sd_rsq[[7]],
-                               P.phase.avg = list_var_phase[[1]],
-                               LAI.phase.avg = list_var_phase[[2]],
-                               VPD.phase.avg = list_var_phase[[3]],
-                               SWC.phase.avg = list_var_phase[[4]],
-                               Tair.phase.avg = list_var_phase[[5]],
-                               Tsoil.phase.avg = list_var_phase[[6]],
-                               PAR.phase.avg = list_var_phase[[7]])
+                               VPD = list_var_rsq[[1]],
+                               P = list_var_rsq[[2]],
+                               Tair = list_var_rsq[[3]],
+                               PAR = list_var_rsq[[4]],
+                               SWCshall = list_var_rsq[[5]],
+                               SWCdeep = list_var_rsq[[6]],
+                               Tsoil = list_var_rsq[[7]],
+                               LAI = list_var_rsq[[8]],
+                               VPD.sd = list_sd_rsq[[1]],
+                               P.sd = list_sd_rsq[[2]],
+                               Tair.sd = list_sd_rsq[[3]],
+                               PAR.sd = list_sd_rsq[[4]],
+                               SWCshall.sd = list_sd_rsq[[5]],
+                               SWCdeep.sd = list_sd_rsq[[6]],
+                               Tsoil.sd = list_sd_rsq[[7]],
+                               LAI.sd = list_sd_rsq[[8]],
+                               VPD.phase.avg = list_var_phase[[1]],
+                               P.phase.avg = list_var_phase[[2]],
+                               Tair.phase.avg = list_var_phase[[3]],
+                               PAR.phase.avg = list_var_phase[[4]],
+                               SWCshall.phase.avg = list_var_phase[[5]],
+                               SWCdeep.phase.avg = list_var_phase[[6]],
+                               Tsoil.phase.avg = list_var_phase[[7]],
+                               LAI.phase.avg = list_var_phase[[8]])
   
 }
 d_CWC_T <- bind_rows(list.site)
-d_CWC_T_longer <- pivot_longer(d_CWC_T, cols = c(3:9), names_to = "var", values_to = "rsq.avg")
 
-# pivot_longer sds
-temp <- c()
-var_list <- c("P", "LAI", "VPD", "SWC", "Tair", "Tsoil", "PAR")
-col_list <-c("P.s", "LAI.s", "VPD.s", "SWC.s", "Tair.s", "Tsoil.s", "PAR.s")
-for( i in c(1:length(var_list))){
-  for( j in c(1:nrow(d_CWC_T_longer))){
-    
-    # if the var name in the df row matches i
-    # then assign the correct sd value to temp
-    if(grepl(var_list[i],d_CWC_T_longer$var[j])){
-      temp2 <- select(d_CWC_T_longer,contains(col_list[i]))[j,]
-      temp[[j]] <- as.numeric(temp2)
-    }
-    
-  }
-}
-d_CWC_T_longer <- d_CWC_T_longer %>% 
-  mutate(sd = temp) %>%
-  select(-contains(col_list))
+# pivot longer
+d_CWC_T_longer <- pivot_longer(d_CWC_T, cols = c(3:10), names_to = "var", values_to = "rsq.avg")
+d_CWC_T_longer_sd <- pivot_longer(d_CWC_T, cols = c(11:18), names_to = "var", values_to = "sd")
+d_CWC_T_longer_phase <- pivot_longer(d_CWC_T, cols = c(19:26), names_to = "var", values_to = "phase")
+d_CWC_T_longer <- d_CWC_T_longer %>%
+  select(site,period,var,rsq.avg) %>%
+  mutate(sd = d_CWC_T_longer_sd$sd, phase = d_CWC_T_longer_phase$phase)
 
-# pivot_longer phases
-temp <- c()
-var_list <- c("P", "LAI", "VPD", "SWC", "Tair", "Tsoil", "PAR")
-col_list <-c("P.p", "LAI.p", "VPD.p", "SWC.p", "Tair.p", "Tsoil.p", "PAR.p")
-for( i in c(1:length(var_list))){
-  for( j in c(1:nrow(d_CWC_T_longer))){
-    
-    # if the var name in the df row matches i
-    # then assign the correct sd value to temp
-    if(grepl(var_list[i],d_CWC_T_longer$var[j])){
-      temp2 <- select(d_CWC_T_longer,contains(col_list[i]))[j,]
-      temp[[j]] <- as.numeric(temp2)
-    }
-    
-  }
-}
-d_CWC_T_longer <- d_CWC_T_longer %>% 
-  mutate(phase = temp) %>%
-  select(-contains(col_list))
 
 d_CWC_T_longer$sd <- as.numeric(d_CWC_T_longer$sd)
 d_CWC_T_longer$phase <- as.numeric(d_CWC_T_longer$phase)
-d_CWC_T_longer$site <- factor(d_CWC_T_longer$site, levels = site_label_list, labels = c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm", "US-Vcs"))
-write.csv(d_CWC_T_longer,"/output_CWC/T/d_CWC_T_longer.csv", row.names = F)
-save(wtc.mat, file = "/output_CWC/T/wtc.T.RData")
+d_CWC_T_longer$site <- factor(d_CWC_T_longer$site, levels = site_label_list, labels = c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm1", "US-Vcm2", "US-Vcs"))
+write.csv(d_CWC_T_longer,"./output_CWC/T/d_CWC_T_longer.csv", row.names = F)
+save(wtc.mat, file = "./output_CWC/T/wtc.T.RData")
 graphics.off()
-
+}
 
 ##############################################################################################################
 #################################### Cross-wavelet coherence for T/ET LOOP ####################################
 ##############################################################################################################
+if(testT_ratio >0){
 site_label_list <- c("seg", "ses", "wjs", "mpj", "vcp", "vcm1","vcm2", "vcs")
 graph_label_list <- c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm1", "US-Vcm2", "US-Vcs")
-d_list <- d_list
+d_list <- d_T_list
 var_list <- c(9:11, 14:15, 17:18, 20)
 var_label_list <- c("VPD", "P", "Tair", "PAR", "SWCshall","SWCdeep", "Tsoil", "LAI")
 
 sublist3 <- list() # biwavelet level
-sublist2 <- list(sublist3, sublist3, sublist3, sublist3, sublist3, sublist3, sublist3) # var level
+sublist2 <- list(sublist3, sublist3, sublist3, sublist3, sublist3, sublist3, sublist3, sublist3) # var level
 names(sublist2) <- var_label_list # name variables
-wtc.mat <- list(sublist2, sublist2, sublist2, sublist2, sublist2, sublist2, sublist2) # site level
+wtc.mat <- list(sublist2, sublist2, sublist2, sublist2, sublist2, sublist2, sublist2, sublist2) # site level
 names(wtc.mat) <- site_label_list
 list_var_rsq <- list()
 list_sd_rsq <- list()
@@ -499,7 +470,8 @@ for(i in c(1:8)){ # site level
     list_var_phase[[k]] <- temp.avg.phase # will take avg of phases
     
     # Plotting a graph
-    png(paste("/T_ratio/graphs/p_", site_label_list[i], "_", var_label_list[k], "_T_ratio", ".png",sep=""), width = 900, height = 700)
+    if(testT_ratio==2){
+    png(paste("./output_CWC/T_ratio/graphs/p_", site_label_list[i], "_", var_label_list[k], "_T_ratio", ".png",sep=""), width = 900, height = 700)
     
     par(oma = c(0, 0, 0, 1), mar = c(5, 4, 5, 5) + 0.1)
     plot(wtc.AB, plot.phase = TRUE, lty.coi = 1, col.coi = "grey", lwd.coi = 2,
@@ -520,10 +492,10 @@ for(i in c(1:8)){ # site level
       axis(side = 3, at = c(seq(0, n, 365)), labels = c(seq(2009, 2021, 1)))
     }
     if(i == 6){ # vcm1
-      axis(side = 3, at = c(seq(0, n, 365)), labels = c(2009,2010,2011,2012))
+      axis(side = 3, at = c(seq(0, n, 365)), labels = c(2009,2010,2011,2012,2013))
     }
     if(i == 7){ # vcm2
-      axis(side = 3, at = c(seq(0, n, 365)), labels = c(2014,2015,2016,2017,2018,2019,2020,2021))
+      axis(side = 3, at = c(seq(0, n, 365)), labels = c(2014,2015,2016,2017,2018,2019,2020))
     }
     if(i == 8){ # vcs
       axis(side = 3, at = c(seq(0, n, 365)), labels = c(seq(2017, 2021, 1)))
@@ -533,81 +505,55 @@ for(i in c(1:8)){ # site level
     }
     
     dev.off()
+    }
     k = k + 1 
   }
   
-  #var_label_list <- c("VPD", "P", "Tair", "PAR", "SWC","Tsoil", "LAI")
+  #var_label_list <- c("VPD", "P", "Tair", "PAR", "SWCshall","SWCdeep", "Tsoil", "LAI")
   list.site[[i]] <- data.frame(site = site_label_list[i],
                                period = temp.period, 
-                               P = list_var_rsq[[1]],
-                               LAI = list_var_rsq[[2]],
-                               VPD = list_var_rsq[[3]],
-                               SWC = list_var_rsq[[4]],
-                               Tair = list_var_rsq[[5]],
-                               Tsoil = list_var_rsq[[6]],
-                               PAR = list_var_rsq[[7]],
-                               P.sd = list_sd_rsq[[1]],
-                               LAI.sd = list_sd_rsq[[2]],
-                               VPD.sd = list_sd_rsq[[3]],
-                               SWC.sd = list_sd_rsq[[4]],
-                               Tair.sd = list_sd_rsq[[5]],
-                               Tsoil.sd = list_sd_rsq[[6]],
-                               PAR.sd = list_sd_rsq[[7]],
-                               P.phase.avg = list_var_phase[[1]],
-                               LAI.phase.avg = list_var_phase[[2]],
-                               VPD.phase.avg = list_var_phase[[3]],
-                               SWC.phase.avg = list_var_phase[[4]],
-                               Tair.phase.avg = list_var_phase[[5]],
-                               Tsoil.phase.avg = list_var_phase[[6]],
-                               PAR.phase.avg = list_var_phase[[7]])
+                               VPD = list_var_rsq[[1]],
+                               P = list_var_rsq[[2]],
+                               Tair = list_var_rsq[[3]],
+                               PAR = list_var_rsq[[4]],
+                               SWCshall = list_var_rsq[[5]],
+                               SWCdeep = list_var_rsq[[6]],
+                               Tsoil = list_var_rsq[[7]],
+                               LAI = list_var_rsq[[8]],
+                               VPD.sd = list_sd_rsq[[1]],
+                               P.sd = list_sd_rsq[[2]],
+                               Tair.sd = list_sd_rsq[[3]],
+                               PAR.sd = list_sd_rsq[[4]],
+                               SWCshall.sd = list_sd_rsq[[5]],
+                               SWCdeep.sd = list_sd_rsq[[6]],
+                               Tsoil.sd = list_sd_rsq[[7]],
+                               LAI.sd = list_sd_rsq[[8]],
+                               VPD.phase.avg = list_var_phase[[1]],
+                               P.phase.avg = list_var_phase[[2]],
+                               Tair.phase.avg = list_var_phase[[3]],
+                               PAR.phase.avg = list_var_phase[[4]],
+                               SWCshall.phase.avg = list_var_phase[[5]],
+                               SWCdeep.phase.avg = list_var_phase[[6]],
+                               Tsoil.phase.avg = list_var_phase[[7]],
+                               LAI.phase.avg = list_var_phase[[8]])
   
 }
 d_CWC_T_ratio <- bind_rows(list.site)
-d_CWC_T_ratio_longer <- pivot_longer(d_CWC_T_ratio, cols = c(3:9), names_to = "var", values_to = "rsq.avg")
+d_CWC_T_ratio_longer <- pivot_longer(d_CWC_T_ratio, cols = c(3:10), names_to = "var", values_to = "rsq.avg")
 
-# pivot_longer sds
-temp <- c()
-var_list <- c("P", "LAI", "VPD", "SWC", "Tair", "Tsoil", "PAR")
-col_list <-c("P.s", "LAI.s", "VPD.s", "SWC.s", "Tair.s", "Tsoil.s", "PAR.s")
-for( i in c(1:length(var_list))){
-  for( j in c(1:nrow(d_CWC_T_ratio_longer))){
-    
-    # if the var name in the df row matches i
-    # then assign the correct sd value to temp
-    if(grepl(var_list[i],d_CWC_T_ratio_longer$var[j])){
-      temp2 <- select(d_CWC_T_ratio_longer,contains(col_list[i]))[j,]
-      temp[[j]] <- as.numeric(temp2)
-    }
-    
-  }
-}
-d_CWC_T_ratio_longer <- d_CWC_T_ratio_longer %>% 
-  mutate(sd = temp) %>%
-  select(-contains(col_list))
+# pivot longer
+d_CWC_T_ratio_longer <- pivot_longer(d_CWC_T_ratio, cols = c(3:10), names_to = "var", values_to = "rsq.avg")
+d_CWC_T_ratio_longer_sd <- pivot_longer(d_CWC_T_ratio, cols = c(11:18), names_to = "var", values_to = "sd")
+d_CWC_T_ratio_longer_phase <- pivot_longer(d_CWC_T_ratio, cols = c(19:26), names_to = "var", values_to = "phase")
+d_CWC_T_ratio_longer <- d_CWC_T_ratio_longer %>%
+  select(site,period,var,rsq.avg) %>%
+  mutate(sd = d_CWC_T_ratio_longer_sd$sd, phase = d_CWC_T_ratio_longer_phase$phase)
 
-# pivot_longer phases
-temp <- c()
-var_list <- c("P", "LAI", "VPD", "SWC", "Tair", "Tsoil", "PAR")
-col_list <-c("P.p", "LAI.p", "VPD.p", "SWC.p", "Tair.p", "Tsoil.p", "PAR.p")
-for( i in c(1:length(var_list))){
-  for( j in c(1:nrow(d_CWC_T_ratio_longer))){
-    
-    # if the var name in the df row matches i
-    # then assign the correct sd value to temp
-    if(grepl(var_list[i],d_CWC_T_ratio_longer$var[j])){
-      temp2 <- select(d_CWC_T_ratio_longer,contains(col_list[i]))[j,]
-      temp[[j]] <- as.numeric(temp2)
-    }
-    
-  }
-}
-d_CWC_T_ratio_longer <- d_CWC_T_ratio_longer %>% 
-  mutate(phase = temp) %>%
-  select(-contains(col_list))
 
 d_CWC_T_ratio_longer$sd <- as.numeric(d_CWC_T_ratio_longer$sd)
 d_CWC_T_ratio_longer$phase <- as.numeric(d_CWC_T_ratio_longer$phase)
-d_CWC_T_ratio_longer$site <- factor(d_CWC_T_ratio_longer$site, levels = site_label_list, labels = c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm", "US-Vcs"))
-write.csv(d_CWC_T_ratio_longer,"/output_CWC/T_ratio/d_CWC_T_ratio_longer.csv", row.names = F)
-save(wtc.mat, file = "/output_CWC/T_ratio/wtc.T_ratio.RData")
+d_CWC_T_ratio_longer$site <- factor(d_CWC_T_ratio_longer$site, levels = site_label_list, labels = c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm1", "US-Vcm2", "US-Vcs"))
+write.csv(d_CWC_T_ratio_longer,"./output_CWC/T_ratio/d_CWC_T_ratio_longer.csv", row.names = F)
+save(wtc.mat, file = "./output_CWC/T_ratio/wtc.T_ratio.RData")
 graphics.off()
+}

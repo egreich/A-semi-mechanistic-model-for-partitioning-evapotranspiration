@@ -8,5 +8,5 @@
 #SBATCH --mail-user=egr65@nau.edu
 
 
-chmod +x 04_CWC_analysis.R
-srun 04_CWC_analysis.R
+chmod +x ./scripts/04_CWC_analysis.R
+srun ./scripts/04_CWC_analysis.R
