@@ -13,6 +13,7 @@ library(ggdist) # for part of raincloud plots
 library(gghalves) # for part of raincloud plots
 library(beeswarm) # for part of raincloud plots
 library(viridis) # for colors
+library(ggh4x) # for facet_wrap2, the superior facet_wrap
 
 # Create necessary folders if they do not already exist
 if(!file.exists("plots")) { dir.create("plots")}
@@ -73,6 +74,7 @@ df_sum_noECO <- df_sum_noECO %>%
   mutate(model = "without ECO")
 
 df_all <- rbind(df_sum, df_sum_noECO)
+
 ################### Compare model fits with and without ECOSTRESS
 
 # with ECO
@@ -156,7 +158,6 @@ ggsave2("model_noECO_fit.png", plot = p1.2, path = path_out, width = 8, height =
 
 
 
-library(ggh4x)
 p <- df_all %>%
   filter(var %in% c("ET", "ET.pred")) %>%
   pivot_wider(id_cols = c(site,ID1,model), names_from = var, values_from = c(mean,median,sd,pc2.5,pc97.5)) %>%
@@ -202,11 +203,12 @@ df_WUE <- cbind(df_WUE1,df_WUE2)
 
 p3 <- df_WUE %>%
   ggplot(aes(x = mean_WUE1, y= mean_WUE2)) +
-  geom_pointrange(aes(xmin=pc2.5_WUE1, xmax=pc97.5_WUE1), alpha=0.1, color = "purple")+
+  geom_pointrange(aes(xmin=pc2.5_WUE1, xmax=pc97.5_WUE1), alpha=0.1, color = "black")+
   geom_pointrange(aes(ymin=pc2.5_WUE2, ymax=pc97.5_WUE2), alpha=0.1, color = "cyan")+
   geom_smooth(method="lm", se = F, color = "red") +
   geom_abline(slope=1, intercept=0, lty=2, col="blue", size=1.25)+
   stat_cor(aes(label = ..rr.label..), color = "red", geom = "label") +
+  ylim(0,17) + xlim(0,17) +
   #stat_cor(aes(label = ..rr.label..), color = "red", label.x = 0.5, size = 3) +
   facet_wrap(vars(site)) +
   labs(title = NULL, x="predicted WUE with ECOSTRESS", y="predicted WUE without ECOSTRESS") +
@@ -364,106 +366,6 @@ test2WUE <- testWUE %>%
 
 ############################### Plots
 
-################### Raincloud plot for environmental varibales for site description figure
-
-d_B_sites <- df_daily
-
-d_B_sites <- d_B_sites %>%
-  pivot_longer(cols = c("ET", "GPP", "VPD", "P", "Tair"), names_to = "var")
-
-#d_B_sites$water_year <- as.Date(d_B_sites$water_year, format = "%Y")
-
-# descriptive raincloud plots
-
-(p <- d_B_sites%>%
-    #filter(var == "ET") %>%
-    ggplot(aes(date, value, color = site)) + 
-    geom_line() +
-    scale_color_brewer(palette="RdYlBu") +
-    facet_grid(var~site, scales = "free_y") +
-    labs(title = NULL, y = NULL, x = NULL, fill = NULL) +
-    theme_bw() +
-    theme(legend.text=element_text(size=16),
-          text = element_text(size=16),
-          axis.line = element_line(color = "black"),
-          #axis.text.x = element_text(size = 16),
-          plot.title = element_text(hjust = 0.5)))
-
-ggsave2("p_desc_sites.png", plot = p, path = path_out)
-
-(p <- d_B_sites %>%
-    ggplot(aes(Site, value, color = Season)) +
-    geom_dots(alpha=0.2) +
-    #stat_slab(aes(thickness = stat(n)), scale = 0.7, alpha = 0.35) +
-    #stat_dotsinterval(aes(fill_ramp = Season),slab_shape = 19, quantiles = 500, position = "dodge") +
-    # ggdist::stat_halfeye(aes(fill=Season, thickness = stat(pdf*n)),
-    #                      alpha = 0.35,
-    #                      scale = 1.1,
-    #                      ## custom bandwidth
-    #                      #adjust = .5,
-    #                      ## adjust height
-    #                      #width = 1.5,
-    #                      ## move geom to the right
-    #                      justification = -.1,
-  #                      ## remove slab interval
-  #                      .width = 0,
-  #                      point_colour = NA) +
-  #geom_boxplot(
-  #  width = .12, outlier.shape = NA) +
-  facet_grid(var~Site, scales = "free") +
-    #scale_fill_ramp_discrete(from = "red", range = c(1, 0)) +
-    scale_fill_viridis(discrete = T) +
-    labs(title = NULL, y = NULL, x = NULL, color = NULL) +
-    theme_bw() +
-    theme(legend.text=element_text(size=16),
-          text = element_text(size=16),
-          axis.line = element_line(color = "black"),
-          #axis.text.x = element_text(size = 16),
-          plot.title = element_text(hjust = 0.5)))
-
-
-path_out = "~/Documents/Emma/NAU/NMfluxtowers/TET_dailyfluxes/Ecohydrology_Bayesian_ETpartition_model/Ecohy_flex/graphs/" # set save path
-
-ggsave2("p_desc_sites2.png", plot = p, path = path_out)
-
-
-(p <- d_B_sites%>%
-    filter(var != "P") %>%
-    ggplot(aes(Site, value, color = Site)) + 
-    geom_boxplot() +
-    scale_color_brewer(palette="RdYlBu") +
-    facet_col("var", scales = "free") +
-    labs(title = NULL, y = NULL, x = NULL, fill = NULL) +
-    theme_bw() +
-    theme(legend.text=element_text(size=16),
-          text = element_text(size=16),
-          axis.line = element_line(color = "black"),
-          #axis.text.x = element_text(size = 16),
-          plot.title = element_text(hjust = 0.5)))
-
-(pP <- d_B_sites%>%
-    filter(var == "P") %>%
-    ggplot(aes(date, value, color = Site)) + 
-    geom_line() +
-    scale_color_brewer(palette="RdYlBu") +
-    facet_col("Site") +
-    labs(title = NULL, y = NULL, x = NULL, fill = NULL) +
-    theme_bw() +
-    theme(legend.text=element_text(size=16),
-          text = element_text(size=16),
-          axis.line = element_line(color = "black"),
-          #axis.text.x = element_text(size = 16),
-          plot.title = element_text(hjust = 0.5)))
-
-(p_grid <- grid.arrange(p, pP, nrow = 2))
-
-path_out = "~/Documents/Emma/NAU/NMfluxtowers/TET_dailyfluxes/Ecohydrology_Bayesian_ETpartition_model/Ecohy_flex/graphs/" # set save path
-
-ggsave2("p_desc_sites3.png", plot = p, path = path_out)
-
-
-
-
 ####################### WUE box plots
 
 d_B_wue_sites<-df_weekly
@@ -558,41 +460,33 @@ hist(mostcommon)
 ggsave2("p_WUE_raincloud_summer.png", plot = p, path = path_out)
 
 
-################## test
 
-test <- df_daily %>%
-  filter(site== "US-Mpj")
-  
-ggplot(data=test) +
-  geom_line(aes(x=date,y=GPP), color = "green") +
-  #geom_line(aes(x=date,y=ET), color = "purple", alpha=.2) +
-  geom_line(aes(x=date,y=mean_T.pred), color = "blue", alpha=.2) +
-  theme_bw()
-
-
-ggplot(data=test) +
-  geom_line(aes(x=date,y=P), color = "blue") +
-  theme_bw()
-
-
-
-t1 = cbind(c(1:nrow(test)), test$ET)
-t2 = cbind(c(1:nrow(test)), test$GPP)
-
-nrands = 100
-
-wtc.AB = wtc(t1, t2, nrands = nrands)
-
-par(oma = c(0, 0, 0, 1), mar = c(5, 4, 5, 5) + 0.1)
-plot(wtc.AB, plot.phase = TRUE, lty.coi = 1, col.coi = "grey", lwd.coi = 2,
-     lwd.sig = 2, arrow.lwd = 0.06, arrow.len = 0.11,
-     ylim=range(2:64),
-     ylab = "Scale", xlab = "Day",
-     plot.cb = TRUE, main = bquote("US-Mpj" ~ "Wavelet Coherence:" ~ "T" ~ "vs GPP"))
-
-# Adding grid lines
-n = length(t1[, 1])
-abline(v = seq(52, n, 52), h = 1:16, col = "brown", lty = 1, lwd = 1)
-axis(side = 3, at = c(seq(0, n, 365)), labels = c(seq(2009, 2021, 1)))
+(p <- d_B_wue_rmwinter %>%
+    ggplot(aes(year, mean_WUE.pred)) + 
+    ggdist::stat_halfeye(aes(fill=Season),
+                         alpha = 0.45,
+                         ## custom bandwidth
+                         adjust = .5,
+                         ## adjust height
+                         width = .96,
+                         ## move geom to the right
+                         justification = -.1,
+                         ## remove slab interval
+                         .width = 0,
+                         point_colour = NA) +
+    geom_boxplot(aes(group=year, color = Season),
+      width = .15) +
+    geom_jitter(aes(color=Season), width = .05, alpha = .2) +
+    #gghalves::geom_half_point(aes(color=Season, group=year),side = "l", range_scale = .4, alpha = .5) +
+    scale_fill_brewer(palette = "Dark2")+
+    facet_col("site", strip.position = "right") + 
+    labs(title = NULL, y = expression(paste("WUE (g C / mm ", H[2], "O)")), x = NULL, fill = NULL) +
+    theme_bw() +
+    theme(legend.position = c(.17,0.15),
+          legend.text=element_text(size=14),
+          text = element_text(size=14),
+          axis.line = element_line(color = "black"),
+          axis.text.x = element_text(size = 14, colour="black"),
+          plot.title = element_text(hjust = 0.5)))
 
 

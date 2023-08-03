@@ -78,8 +78,6 @@ names(sublist2) <- var_label_list # name variables
 wtc.mat <- list(sublist2, sublist2, sublist2, sublist2, sublist2, sublist2, sublist2, sublist2) # site level
 names(wtc.mat) <- site_label_list
 list_var_rsq <- list()
-list_max_rsq <- list()
-list_min_rsq <- list()
 list_sd_rsq <- list()
 list_var_phase <- list()
 list.site <- list()
