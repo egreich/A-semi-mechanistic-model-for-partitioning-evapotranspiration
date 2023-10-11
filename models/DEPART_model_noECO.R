@@ -3,22 +3,15 @@
 model{
   
   for(i in 1:N){
-    # Likelihood for ET data; UNITS?
+    # Likelihood for ET data
     ET[i] ~ dnorm(ET.pred[i], tau.ET)
     ET.rep[i] ~ dnorm(ET.pred[i], tau.ET) # replicated data for evaluating model fit
     ET.pred[i] <- E.model[i] + T.pred[i]
   
     # Soil evaporation process-based model
     
-    # Adjust SWC magnitude to correct for measurement errors
-     #S.corr.adj[i] <-  c1 + c2 * S[i] # the "true" SWC should be somewhat smaller than the measured SWC
-     # In the event S.corr is estimated to be exactly 0, instead make it something very close to zero
-     # This occurs only a few times per 10 years of data
-     #S.corr[i] <- ifelse(S.corr.adj[i] <= 0, 0.00000000000000001, S.corr.adj[i])
-    
     # Calculate aerodynamic resistance to heat transfer (rah)- allow k to vary btwn 0.35-0.42
     # 0.001 is Z0m (m), the momentum soil roughness, [Yang et al., 2008; Stefan et al., 2015]
-    # Notes: look for redundant code, and simplify to make it faster
     rah0[i] <- (1/((vk.pred**2)*ws[i]))*((log(Z/0.001))**2) # s/m
     #rah_unstable[i] <- rah0[i]/((1 + Ri[i])**0.75) # aerodynamic resistance to heat transfer s/m, estimated as in Choudhury et al. [1986]
     rah_stable[i] <- ((1 - 0.75*Ri[i])*((log(Z/0.001))**2))/((vk.pred**2)*ws[i])
@@ -43,19 +36,7 @@ model{
     LE3.5[i] <- ifelse(Tsoil[i] >= 0, ((rho[i]*Cp)/gamma[i])*((alpha[i]*(e.sat[i] - e.a[i]))/(rah[i] + rss[i])), 0)
     Esoil3.5[i] <- conv.fact[i]*LE3.5[i]
     
-    # Intercepted E
-    #Eint[i] <- (P[i])*(1 - exp(-k.pred*(LAI[i])))
-    
-    # Snow E
-    # Esnow[i] <- ifelse(Tsoil[i] < 0 & P[i] > 0, 0.08 * ws[i] * (e.sat[i] - e.a[i]), 0)
-    
-    # Soil evaporation from Merlin's 2016 texture-based SEE, as re-described in Lehmann et al 2018 to actually make sense
-    #SEE[i] = ((e.sat.T[i] - e.a[i])/(e.sat.Twet[i]-e.a)) * (rah.wet/(rss + rah))
-    #Esurf[i] = 
-    
-    # e.scalar ~ dunif(0,1) - maybe try this if the fit still isn't that great
     E.model[i] <- p*Esoil4.5[i] + (1-p)*Esoil3.5[i] + Eint[i] + Esnow[i]
-    #E.model[i] <- Esoil3.5[i] + Eint[i] + Esnow[i]
     
     # Predicted transpiration, based on assumption that transpiration is proportional
     # to GPP (following Scott and Biederman); slope = 1/WUE, 
@@ -76,9 +57,6 @@ model{
   
   # given p (proportion "contribution" pf Esoil4.5 to estimated Esoil) a prior, or set = 0.5 in data list
   p ~ dunif(0,1)
-  
-  # Set a new S.min
-  #S.min.corr <- c1 + c2 * S.min
 
   # for each time block
   for(i in 1:Nblocks){
@@ -87,18 +65,12 @@ model{
   }
   # Priors for "initial conditions" for WUE.
   WUE.pred[1] ~ dunif(0,30)
-  #WUE.wght[1] ~ dunif(0,30)
   WUE.wght[1] <- WUE.pred[1]*GPP.avg[1]
-  # UNITS for WUE from Ecostress?
-  #WUE.ecostress[1] ~ dunif(0,30) # was 10
   for(i in 2:Nblocks){
     # This assumes that the precision for the "predicted" or "true" WUE of the site varies
     # around the WUE from the days around it, with some uncertainty
     WUE.pred[i] ~ dnorm(WUE.pred[i-1], tau.WUE)T(0,)
     WUE.wght[i] <- WUE.pred[i]*GPP.avg[i]
-    # Likelihood for observed (and missing) WUE from ECOSTRESS.
-    # Model below also assumes each time block is of equal length (e.g., weekly)
-    #WUE.ecostress[i] ~ dnorm(WUE.ecostress[i-1], tau.ecostress)T(0,)
   }
   
   
@@ -112,7 +84,7 @@ model{
   
   
   WUE.overall <- sum(WUE.wght[]) / sum(GPP.avg[])
-  WUE.overall.annual <- mean(WUE.annual[]) # take the avg of WUE annual # add WUE.overall.winter, etc
+  WUE.overall.annual <- mean(WUE.annual[]) # take the avg of WUE annual
   WUE.overall.winter <- mean(WUE.winter[])
   WUE.overall.spring <- mean(WUE.spring[])
   WUE.overall.summer <- mean(WUE.summer[])
@@ -123,25 +95,13 @@ model{
   sig.ET <- 1/sqrt(tau.ET)
   sig.WUE ~ dunif(0,20)
   tau.WUE <- pow(sig.WUE,-2)
-  #sig.ecostress ~ dunif(0,10)
-  #tau.ecostress <- pow(sig.ecostress,-2)
   
   # Priors for stochastic parameters for E equations
-  vk.pred ~ dunif(0.35, 0.42) # the von Karman constant is usually 0.40
+  vk.pred ~ dunif(0.35, 0.42) # the von Karman constant is usually 0.40, but here we let it vary
   bch.pred ~ dnorm(bch, 0.40)T(0,) # Clapp and Hornberger parameter
   k.pred ~ dnorm(0.5, 10)T(0,) # k = 0.5 # decay function k for intercepted E
   fc.pred ~ dnorm(fc, 200)T(S.min,1) # upper limit 1
-  # pick a precision that's less precise
-  # Look at clay across all sites, maybe base precision off that, make more flexible
-  # decrease precision, increase variance, but check with sites
   sres.pred ~ dnorm(sres, 80000)T(0,S.min)# residual soil moisture
-  # Plot ssat to see what the range is
   ssat.pred ~ dnorm(ssat, 50)T(0,) # soil moisture at saturation
-  #check this equation- it gives negative numbers when fsand is above .38, which is weird (should it be positive???)
-  psisat.pred ~ dnorm(psisat, 0.015)T(-1000,0)  # parameterized air entry pressure, in mm of water, check equation and limits
-  
-  # Priors to scale SWC
-  #c2 ~ dunif(0, 1)
-  #lowerc1 <- -c2 * S.min
-  #c1 ~ dunif(lowerc1, 0)
+  psisat.pred ~ dnorm(psisat, 0.015)T(-1000,0)  # parameterized air entry pressure, in mm of water
 }
