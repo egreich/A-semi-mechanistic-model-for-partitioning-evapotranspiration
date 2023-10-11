@@ -59,10 +59,10 @@ dataIN_gpp <- get(paste("dataIN_gpp_",key,sep="")) # seasonal time series, for W
 
 
 #get_ETpart_inits(dataIN, dataIN_wue, dataIN_gpp, key, chain, ECOSTRESS = F)
-ETpart(dataIN, dataIN_wue, dataIN_gpp, key, chain, ECOSTRESS = F)
+ETpart(dataIN, dataIN_wue, dataIN_gpp, key, chain, ECOSTRESS = F, inits_only=F)
 
 
 #get_ETpart_inits(dataIN, dataIN_wue, dataIN_gpp, key, chain)
-ETpart(dataIN, dataIN_wue, dataIN_gpp, key, chain)
+#ETpart(dataIN, dataIN_wue, dataIN_gpp, key, chain, ECOSTRESS = T, inits_only=F)
 
 

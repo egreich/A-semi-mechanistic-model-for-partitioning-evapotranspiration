@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 
-ETpart <- function(dataIN, dataIN_wue, dataIN_gpp, key, chain=NULL, ECOSTRESS=T){
+ETpart <- function(dataIN, dataIN_wue, dataIN_gpp, key, chain=NULL, ECOSTRESS=T, inits_only=F){
   
   # Create necessary folders if they do not already exist
   if(!file.exists("output_coda")) { dir.create("output_coda")}
@@ -44,7 +44,7 @@ ETpart <- function(dataIN, dataIN_wue, dataIN_gpp, key, chain=NULL, ECOSTRESS=T)
               ET = dataIN$ET,
               GPP = dataIN$GPP,
               ws = dataIN$ws,
-              conv.fact = 0.0864 * 0.408,
+              conv.fact = (60*60*24)/((2.501 - 0.00237*dataIN$Tair)*10^6), #0.0864 * 0.408, # 1/Latent heat of vaporization (J kg-1) * seconds to day conversion to get in units of mm m-2 day-1
               rho = dataIN$pair,
               Ri = dataIN$Ri,
               rah_unstable = dataIN$rah, # in the data, rah is just rah_unstable when appropriate. We are letting rah_stable vary (stochastic) so that's why we read this in.
@@ -93,7 +93,7 @@ ETpart <- function(dataIN, dataIN_wue, dataIN_gpp, key, chain=NULL, ECOSTRESS=T)
                 ET = dataIN$ET,
                 GPP = dataIN$GPP,
                 ws = dataIN$ws,
-                conv.fact = 0.0864 * 0.408,
+                conv.fact = (60*60*24)/((2.501 - 0.00237*dataIN$Tair)*10^6), # Latent heat of vaporization (J kg-1)
                 rho = dataIN$pair,
                 Ri = dataIN$Ri,
                 rah_unstable = dataIN$rah, # in the data, rah is just rah_unstable when appropriate. We are letting rah_stable vary (stochastic) so that's why we read this in.
@@ -142,7 +142,7 @@ ETpart <- function(dataIN, dataIN_wue, dataIN_gpp, key, chain=NULL, ECOSTRESS=T)
                 ET = dataIN$ET,
                 GPP = dataIN$GPP,
                 ws = dataIN$ws,
-                conv.fact = 0.0864 * 0.408,
+                conv.fact = (60*60*24)/((2.501 - 0.00237*dataIN$Tair)*10^6), # Latent heat of vaporization (J kg-1)
                 rho = dataIN$pair,
                 Ri = dataIN$Ri,
                 rah_unstable = dataIN$rah, # in the data, rah is just rah_unstable when appropriate. We are letting rah_stable vary (stochastic) so that's why we read this in.
@@ -190,7 +190,7 @@ ETpart <- function(dataIN, dataIN_wue, dataIN_gpp, key, chain=NULL, ECOSTRESS=T)
                   ET = dataIN$ET,
                   GPP = dataIN$GPP,
                   ws = dataIN$ws,
-                  conv.fact = 0.0864 * 0.408,
+                  conv.fact = (60*60*24)/((2.501 - 0.00237*dataIN$Tair)*10^6), # Latent heat of vaporization (J kg-1)
                   rho = dataIN$pair,
                   Ri = dataIN$Ri,
                   rah_unstable = dataIN$rah, # in the data, rah is just rah_unstable when appropriate. We are letting rah_stable vary (stochastic) so that's why we read this in.
@@ -232,6 +232,29 @@ ETpart <- function(dataIN, dataIN_wue, dataIN_gpp, key, chain=NULL, ECOSTRESS=T)
   # Load initial values from previous run
   load(initfilename)
   
+  if(ECOSTRESS==F){ # temp for convergence
+    if(chain==2){
+      if(key %in% c("mpj","vcp","wjs")){
+        
+        if(key== "wjs"){
+          lowdev = 1
+        }else if (key== "mpj"){
+          lowdev = 3
+        }else if (key== "vcp"){
+          lowdev = 1
+        }
+        
+        initfilename <- paste("./models/inits/inits_noECO_", lowdev,"_", key, ".RData", sep = "")
+        load(initfilename)
+        
+        saved.state[["initials"]][[1]]<- lapply(saved.state[["initials"]][[1]], function(x) x*2)
+      }
+    }
+
+  }
+  
+  if(inits_only==F){
+    
   n.adapt  = 5000
   
   n.chains = 3
@@ -267,7 +290,7 @@ ETpart <- function(dataIN, dataIN_wue, dataIN_gpp, key, chain=NULL, ECOSTRESS=T)
              "WUE.overall.spring","WUE.overall.summer", "WUE.overall.winter",
              "WUE.postmonsoon", "WUE.pred", "WUE.spring","WUE.summer", "WUE.wght", "WUE.winter",
              'bch.pred', "deviance", 'fc.pred', 'k.pred', "p", 'psisat.pred', "sig.ET","sig.WUE", 
-             "sig.ecostress", "slope", 'ssat.pred', 'sres.pred', "tau.ecostress", 'vk.pred')
+             "sig.ecostress", "slope", 'ssat.pred', 'sres.pred', "tau.ET", "tau.ecostress", 'vk.pred')
   
   
   zc1 = coda.samples(jm1.b,variable.names=params,
@@ -275,119 +298,79 @@ ETpart <- function(dataIN, dataIN_wue, dataIN_gpp, key, chain=NULL, ECOSTRESS=T)
   
   save(zc1, file = zcfilename)  # save the model output for graphs
   
+  }
+  
   #####################################################################
   # Part 5: Save inits for future runs
   
-  # inits to save
-  #init_names = c("tau.ET","sig.WUE","sig.ecostress")
+  if(inits_only==T){
+    load(zcfilename)
+  }
+    
+    # inits to save
   
-  # variables to remove
-  #get_remove_index <- function(to_keep, list){
-  #   out_list <- c()
-  #   for(j in c(1:length(list))){
-  #     if(list[j] %in% to_keep){
-  #       out_list[j] = NA
-  #     } else{
-  #       out_list[j] = j
-  #     }
-  #   }
-  #   out_list <- out_list[!is.na(out_list)]
-  #   out_list
-  # }
-  
-  #remove_vars = get_remove_index(init_names, params)
-  
-  #extract final iteration to reinitialize model if needed
-  #newinits<-initfind(zc1, OpenBUGS = F)
-  #remove non-root node variables
-  #saved.state <- removevars(initsin = newinits, variables=remove_vars) # remove non-variable nodes
-  #check both items in list
-  #save(saved.state, file=initfilename)
+  if(ECOSTRESS==T){
+    params = c("ET", "E.model", "ET.pred", "ET.rep", "T.pred", "T.ratio",
+               "WUE.annual","WUE.overall.annual", "WUE.overall.postmonsoon",
+               "WUE.overall.spring","WUE.overall.summer", "WUE.overall.winter",
+               "WUE.postmonsoon", "WUE.pred", "WUE.spring","WUE.summer", "WUE.wght", "WUE.winter",
+               'bch.pred', "deviance", 'fc.pred', 'k.pred', "p", 'psisat.pred', "sig.ET","sig.WUE", 
+               "sig.ecostress", "slope", 'ssat.pred', 'sres.pred', "tau.ET", "tau.ecostress", 'vk.pred')
+  }else if(ECOSTRESS==F){
+    params = c("ET", "E.model", "ET.pred", "ET.rep", "T.pred", "T.ratio",
+               "WUE.annual","WUE.overall.annual", "WUE.overall.postmonsoon",
+               "WUE.overall.spring","WUE.overall.summer", "WUE.overall.winter",
+               "WUE.postmonsoon", "WUE.pred", "WUE.spring","WUE.summer", "WUE.wght", "WUE.winter",
+               'bch.pred', "deviance", 'fc.pred', 'k.pred', "p", 'psisat.pred', "sig.ET","sig.WUE", 
+               "slope", 'ssat.pred', 'sres.pred', "tau.ET", 'vk.pred')
+  }
+    init_names = c("tau.ET","sig.WUE","sig.ecostress")
+    
+    if(ECOSTRESS==F){
+      init_names = c("tau.ET","sig.WUE")
+    }
+    
+    # variables to remove
+    get_remove_index <- function(to_keep, list){
+      
+        list <- list[list != "deviance"] # remove deviance
+        list <- sort(list, method = "radix")
+        out_list <- c()
+        for(j in c(1:length(list))){
+          if(list[j] %in% to_keep){
+            out_list[j] = NA
+          } else{
+            out_list[j] = j
+          }
+        }
+        out_list <- out_list[!is.na(out_list)]
+        out_list
+      
+    }
+    
+    remove_vars = get_remove_index(init_names, params)
+    
+    #extract final iteration to reinitialize model if needed
+    newinits<-initfind(zc1, OpenBUGS = F)
+    #remove non-root node variables
+    saved.state <- removevars(initsin = newinits, variables=remove_vars) # remove non-variable nodes
+    #check both items in list
+    save(saved.state, file=initfilename)
+    
+    # print deviance of chain
+    dev_col <- which(colnames(zc1[[1]]) == "deviance")
+    dev1<- mean(zc1[[1]][,dev_col])
+    print(paste("deviance: ", dev1, sep=""))
+    
   
   #####################################################################
   ###  Make site-specific data frames if not running on HPC
   if(is.null(chain)){
-  sumzc <- summary(zc1)
   
   # Extract mean and 2.5 and 97.5 quantiles from summary tables
   
-  # Function to extract posterior means, and 2.5 and 97.5 CI quantiles
-  # takes a list of variable names and the coda summary
-  # all variables in the list MUST have the same length posterior outputs
-  # Similar version called coda_to_rows available in the coda4dummies package via devtools::install_github("egreich/coda4dummies")
-  get_coda_rows_to_cols <- function(var_list, coda_sum){
-    
-    sum_tb <- coda_sum[["statistics"]]
-    quan_tb <- coda_sum[["quantiles"]]
-    
-    voi_list <- list()
-    column_names <- list()
-    j = 1
-    
-    for(i in c(1:length(var_list))){
-      
-      searchterm <- paste("^", var_list[i], "\\[", sep = "")
-      
-      # Check if there is more than instance of the variable or not
-      if(length(grep(searchterm, row.names(sum_tb))) == 0){ # if we find nothing
-        searchterm <- paste("^", var_list[i], sep = "") # check if there is only one instance and correct the search term
-        if(length(grep(searchterm, row.names(sum_tb))) == 0){ # if we still find nothing
-          print(paste("Warning: ", var_list[i], " not found in coda summary output", sep = ""))
-          next
-        }
-      }
-      
-      voi_list[[j]] <- sum_tb[grep(searchterm, row.names(sum_tb)),1]
-      voi_list[[j+1]] <- quan_tb[grep(searchterm, row.names(quan_tb)),1]
-      voi_list[[j+2]] <- quan_tb[grep(searchterm, row.names(quan_tb)),5]
-      
-      column_names[[j]] <- paste("B_", var_list[i], sep = "")
-      column_names[[j+1]] <- paste("cred2.5_", var_list[i], sep = "")
-      column_names[[j+2]] <- paste("cred97.5_", var_list[i], sep = "")
-      
-      j = j + 3
-      
-    }
-    suppressMessages(df <- dplyr::bind_cols(voi_list))
-    colnames(df) <- column_names
-    return(df)
-    
-  }
-  
-  sumzc <- summary(coda_all) # coda summary
-  
-  varlist <- c("ET", "ET.pred", "ET.rep", "E.model", "T.pred", "T.ratio") #, "S.corr"
-  daily_df <- get_coda_rows_to_cols(varlist, sumzc)
-  
-  d_B_output <- cbind(dataIN, daily_df)
-  
-  varlist <- c("WUE.pred", "WUE.wght")
-  weekly_df <- get_coda_rows_to_cols(varlist, sumzc)
-  
-  d_B_wue_output <- cbind(dataIN_wue, weekly_df)
-  
-  varlist <- c("WUE.annual", "WUE.winter", "WUE.spring", "WUE.summer")
-  yearly_df <- get_coda_rows_to_cols(varlist, sumzc)
-  
-  d_B_gpp_output <- cbind(dataIN_gpp, yearly_df)
-  
-  varlist <- c("WUE.overall.annual", "WUE.overall.winter", "WUE.overall.spring", "WUE.overall.summer", "WUE.overall.postmonsoon")
-  d_B_wue.overall_output <- get_coda_rows_to_cols(varlist , sumzc)
-  
-  if(ECOSTRESS == T){
-    write.csv(d_B_output, paste("./output_dfs/d_B_",key,".csv",sep=""), row.names = F)
-    write.csv(d_B_wue_output, "./output_dfs/d_B_wue_", key,".csv", row.names = F)
-    write.csv(d_B_gpp_output, "./output_dfs/d_B_gpp_", key,".csv", row.names = F)
-    write.csv(d_B_wue.overall_output, "./output_dfs/d_B_wue.overall_", key,".csv", row.names = F)
-  } else if(ECOSTRESS == F){
-    write.csv(d_B_output, paste("./output_dfs/d_B_noECO_",key,".csv",sep=""), row.names = F)
-    write.csv(d_B_wue_output, "./output_dfs/d_B_wue_noECO_", key,".csv", row.names = F)
-    write.csv(d_B_gpp_output, "./output_dfs/d_B_gpp_noECO_", key,".csv", row.names = F)
-    write.csv(d_B_wue.overall_output, "./output_dfs/d_B_wue.overall_noECO_", key,".csv", row.names = F)
-  }
-  
   # Summarizing chains via Mike Fell's code
-  df_sum <- coda.fast(chains=3, burn.in=0, thin=1, coda=coda_all)
+  df_sum <- coda.fast(chains=3, burn.in=0, thin=1, coda=zc1)
   df_sum <- rownames_to_column(df_sum, "var")
   df_sum <- df_sum %>% # make index column
     mutate(ID = sub('.*\\[(.*)\\]', '\\1', df_sum$var))

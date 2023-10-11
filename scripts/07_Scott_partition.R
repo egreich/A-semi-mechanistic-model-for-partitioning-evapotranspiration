@@ -11,6 +11,10 @@ path_out <- "./plots"
 d_perez = read.csv("./input_data/Perez-Priego/d_Perez_mpj.csv")
 d_perez$date = as.Date(with(d_perez,paste(year,Month,DD,sep="-")),"%Y-%m-%d")
 
+# Load sapflow data
+d_sap = read.csv("./input_data/sapflow/jgrg20918-sup-0005-2017jg004095-ds04.csv")
+d_sap$date <- as.Date(with(d_sap, paste(Year, Month, Day,sep="-")), "%Y-%m-%d")
+
 # Load daily data and DEPART model output
 key <- c("seg", "ses", "wjs", "mpj", "vcp", "vcm2", "vcs")
 list_df_daily <- c()
@@ -135,12 +139,22 @@ partition_perez <- d_perez %>%
   rename(month = Month) %>%
   mutate(site = "mpj")
 
+partition_sap <- d_sap %>%
+  mutate(T_ratio = Tc_with.gaps/ET) %>%
+  filter( Month %in% c(4,5,6,7,8,9,10)) %>%
+  group_by(Month) %>%
+  summarise(sap_T.ratio = mean(T_ratio, na.rm = T)) %>%
+  rename(month = Month) %>%
+  mutate(site = "mpj")
+
 partition_depart2 <- left_join(partition_depart, partition_perez, by = c("site","month"))
 
 df_comp <- left_join(partition_scott, partition_depart2, by = c("site","month"))
 
+df_comp <- left_join(df_comp, partition_sap, by = c("site","month"))
+
 df_comp$site <- factor(df_comp$site, levels =  c("seg", "ses", "wjs", "mpj", "vcp", "vcm1","vcm2", "vcs"),
-                      labels = c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm1", "US-Vcm2", "US-Vcs"))
+                      labels = c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm1", "US-Vcm", "US-Vcs"))
 
 df_comp1 <- df_comp %>%
   rename(slope = m, intercept = b, R2 = rsq, scott_T.ratio = T.ratio) %>%
@@ -152,45 +166,39 @@ df_comp2 <- df_comp %>%
 
 # plot
 
-p<- ggplot(data = df_comp, aes(x=month)) +
-  geom_line(aes(y=value)) +
-  facet_grid(name~site, scales = "free") +
-  theme_bw() +
-  theme(legend.position = "top",
-        legend.title = element_blank())
-p
-
-#ggsave2("scott_compare.png", plot = p, path = path_out, width = 8, height = 5)
-
-
+#"#1B9E77" "#D95F02" "#7570B3" "#E7298A" "#66A61E"
 p1<- ggplot(data = df_comp, aes(x=month)) +
   geom_line(aes(y=T.ratio, color = "Scott and Biederman")) +
   geom_line(aes(y=depart_T.ratio, color = "DEPART")) +
   geom_line(aes(y=perez_T.ratio, color = "Pérez-Priego")) +
-  scale_color_manual(values = c("#8A2BE2", "#458B74", "#EE7621")) +
+  geom_line(aes(y=sap_T.ratio, color = "Sapflow")) +
+  scale_color_manual(values = c("#1B9E77", "#D95F02", "#7570B3", "#666666")) +
   facet_row("site", strip.position = "top") +
   ylab("T/ET") +
   theme_bw() +
   theme(legend.position = "top",
+        legend.text=element_text(size=14),
+        text = element_text(size=14),
         legend.title = element_blank(),
         axis.title.x = element_blank(),
         axis.text.x = element_blank())
-p1
 
 p2 <- ggplot(data = df_comp, aes(x=month)) +
   geom_line(aes(y=rsq, color = "R2")) +
   geom_line(aes(y=m, color = "slope")) +
-  scale_color_manual(values = c("#00008B", "#FF1493")) +
+  scale_color_manual(values = c("#E7298A", "#66A61E")) +
   facet_row("site", strip.position = "top") +
-  ylab("R2 or slope") +
+  ylab(expression(paste(R^{2}," or slope",sep=""))) + xlab("Month") +
   theme_bw()+
   theme(legend.position = "top",
+        legend.text=element_text(size=14),
+        text = element_text(size=14),
         legend.title = element_blank(),
         strip.background = element_blank(),
         strip.text.x = element_blank())
-p2
 
 p <- ggarrange(p1,p2, nrow=2)
+p
 
 ggsave2("scott_compare.png", plot = p, path = path_out, width = 8, height = 5)
 

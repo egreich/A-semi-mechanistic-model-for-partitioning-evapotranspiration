@@ -8,6 +8,7 @@
 library(rjags)
 load.module('dic')
 library(tidyverse)
+library(mcmcplots)
 
 
 # Load self-made functions
@@ -25,14 +26,14 @@ post_ETpart(7, ECOSTRESS = F)
 post_ETpart(8, ECOSTRESS = F)
 
 
-post_ETpart(1)
-post_ETpart(2)
-post_ETpart(3)
-post_ETpart(4)
-post_ETpart(5)
-post_ETpart(6)
-post_ETpart(7)
-post_ETpart(8)
+# post_ETpart(1)
+# post_ETpart(2)
+# post_ETpart(3)
+# post_ETpart(4)
+# post_ETpart(5)
+# post_ETpart(6)
+# post_ETpart(7)
+# post_ETpart(8)
 
 
 ### Run this to recombine output with original timeseries ###

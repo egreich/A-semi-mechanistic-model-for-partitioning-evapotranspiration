@@ -38,10 +38,10 @@ model{
     
     # Soil evaporation from E1 (CLM 4.5)
     LE4.5[i] <- ifelse(Tsoil[i] >= 0, bowen[i]*((rho[i]*Cp)/gamma[i])*((alpha[i]*(e.sat[i] - e.a[i]))/rah[i]), 0)
-    Esoil4.5[i] <- conv.fact*LE4.5[i]
+    Esoil4.5[i] <- conv.fact[i]*LE4.5[i]
     # Soil evaporation from E2 (CLM 3.5)
     LE3.5[i] <- ifelse(Tsoil[i] >= 0, ((rho[i]*Cp)/gamma[i])*((alpha[i]*(e.sat[i] - e.a[i]))/(rah[i] + rss[i])), 0)
-    Esoil3.5[i] <- conv.fact*LE3.5[i]
+    Esoil3.5[i] <- conv.fact[i]*LE3.5[i]
     
     # Intercepted E
     #Eint[i] <- (P[i])*(1 - exp(-k.pred*(LAI[i])))

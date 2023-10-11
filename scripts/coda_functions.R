@@ -259,7 +259,7 @@ sum_timeseries <- function(s){
   }
   
   # Read in summary data
-  dffilename <- paste("./output_dfs/df_sum_", key, ".csv", sep = "")
+  dffilename <- paste("./output_dfs/df_sum_noECO_", key, ".csv", sep = "")
   df_sum <- read.csv(dffilename)
   
   # Define summary filenames based on key

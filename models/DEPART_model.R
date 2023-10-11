@@ -38,20 +38,16 @@ model{
     
     # Soil evaporation from E1 (CLM 4.5)
     LE4.5[i] <- ifelse(Tsoil[i] >= 0, bowen[i]*((rho[i]*Cp)/gamma[i])*((alpha[i]*(e.sat[i] - e.a[i]))/rah[i]), 0)
-    Esoil4.5[i] <- conv.fact*LE4.5[i]
+    Esoil4.5[i] <- conv.fact[i]*LE4.5[i]
     # Soil evaporation from E2 (CLM 3.5)
     LE3.5[i] <- ifelse(Tsoil[i] >= 0, ((rho[i]*Cp)/gamma[i])*((alpha[i]*(e.sat[i] - e.a[i]))/(rah[i] + rss[i])), 0)
-    Esoil3.5[i] <- conv.fact*LE3.5[i]
+    Esoil3.5[i] <- conv.fact[i]*LE3.5[i]
     
     # Intercepted E
     #Eint[i] <- (P[i])*(1 - exp(-k.pred*(LAI[i])))
     
     # Snow E
     # Esnow[i] <- ifelse(Tsoil[i] < 0 & P[i] > 0, 0.08 * ws[i] * (e.sat[i] - e.a[i]), 0)
-    
-    # Soil evaporation from Merlin's 2016 texture-based SEE, as re-described in Lehmann et al 2018 to actually make sense
-    #SEE[i] = ((e.sat.T[i] - e.a[i])/(e.sat.Twet[i]-e.a)) * (rah.wet/(rss + rah))
-    #Esurf[i] = 
     
     # e.scalar ~ dunif(0,1) - maybe try this if the fit still isn't that great
     E.model[i] <- p*Esoil4.5[i] + (1-p)*Esoil3.5[i] + Eint[i] + Esnow[i]

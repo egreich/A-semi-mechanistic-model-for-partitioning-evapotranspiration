@@ -56,19 +56,20 @@ df_weekly <- bind_rows(list_df_weekly)
 
 # order site names
 df_sum$site <- factor(df_sum$site, levels =  c("seg", "ses", "wjs", "mpj", "vcp", "vcm1","vcm2", "vcs"),
-                        labels = c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm1", "US-Vcm2", "US-Vcs"))
+                        labels = c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm1", "US-Vcm", "US-Vcs"))
 df_sum_noECO$site <- factor(df_sum_noECO$site, levels =  c("seg", "ses", "wjs", "mpj", "vcp", "vcm1","vcm2", "vcs"),
-                      labels = c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm1","US-Vcm2", "US-Vcs"))
+                      labels = c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm1","US-Vcm", "US-Vcs"))
 df_daily$site <- factor(df_daily$site, levels =  c("seg", "ses", "wjs", "mpj", "vcp", "vcm1","vcm2", "vcs"),
-                            labels = c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm1","US-Vcm2", "US-Vcs"))
+                            labels = c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm1","US-Vcm", "US-Vcs"))
 df_weekly$site <- factor(df_weekly$site, levels =  c("seg", "ses", "wjs", "mpj", "vcp", "vcm1","vcm2", "vcs"),
-                        labels = c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm1","US-Vcm2", "US-Vcs"))
+                        labels = c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm1","US-Vcm", "US-Vcs"))
 df_sum$ID1 = as.numeric(df_sum$ID1)
 df_sum_noECO$ID1 = as.numeric(df_sum_noECO$ID1)
 
 df_sum <- df_sum %>%
   filter(site != "US-Vcm1") %>%
   mutate(model = "with ECO")
+
 df_sum_noECO <- df_sum_noECO %>%
   filter(site != "US-Vcm1") %>%
   mutate(model = "without ECO")
@@ -78,7 +79,7 @@ df_all <- rbind(df_sum, df_sum_noECO)
 ################### Compare model fits with and without ECOSTRESS
 
 # with ECO
-sitelist <- c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm2", "US-Vcs")
+sitelist <- c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm", "US-Vcs")
 p1 <- list()
 for(i in c(1:7)){
   p1[[i]] <- df_sum %>%
@@ -118,7 +119,7 @@ p1.1 <- grid.arrange(patchworkGrob(p), top = textGrob("Model Fit with ECOSTRESS"
 ggsave2("model_fit.png", plot = p1.1, path = path_out, width = 8, height = 5)
 
 # without ECO
-sitelist <- c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm2", "US-Vcs")
+sitelist <- c("US-Seg", "US-Ses", "US-Wjs", "US-Mpj", "US-Vcp", "US-Vcm", "US-Vcs")
 p1 <- list()
 for(i in c(1:7)){
   p1[[i]] <- df_sum_noECO %>%
@@ -236,57 +237,6 @@ p3
 
 ggsave2("model_WUE_compare.png", plot = p3, path = path_out)
 
-
-p <- df_all %>%
-  filter(var %in% c("WUE.pred")) %>%
-  pivot_wider(id_cols = c(site,ID1,model), names_from = var, values_from = c(mean,median,sd,pc2.5,pc97.5)) %>%
-  ggplot(aes(x = mean_ET, y= mean_ET.pred)) +
-  geom_pointrange(aes(ymin=pc2.5_ET.pred, ymax=pc97.5_ET.pred), alpha=0.5,size=.05)+
-  geom_smooth(method="lm", se = F, aes(color = "linear regression line")) +
-  geom_abline(slope=1, intercept=0, lty=2, col="blue", size=.8)+
-  stat_cor(aes(label = ..rr.label..), color = "red", geom = "label") +
-  scale_color_manual(values = c("red", "blue")) + 
-  ylim(0,6) + xlim(0,6) +
-  facet_wrap2(vars(site,model), ncol = 4, strip = strip_nested(bleed = FALSE)) +
-  labs(title = NULL, x="observed ET", y="predicted ET") +
-  theme(legend.position = c(.75,.1),
-        legend.text=element_text(size=12),
-        text = element_text(size=14),
-        legend.title = element_blank(),
-        panel.background = element_rect(fill="white"),
-        axis.line = element_line(color = "black"),
-        axis.text.x = element_text(colour="black"),
-        aspect.ratio=1,
-        plot.title = element_text(hjust = 0.5))
-p
-
-
-p4 <- df_WUE %>%
-  #filter(site %in% c("US-Ses")) %>%
-  #filter(site %in% c("US-Seg","US-Ses", "US-Wjs", "US-Mpj")) %>%
-  #filter(site %in% c("vcp1","vcp2", "vcm1", "vcm2", "vcs")) %>%
-  #pivot_wider(id_cols = c(site,ID1), names_from = var, values_from = c(mean,median,sd,pc2.5,pc97.5)) %>%
-  ggplot(aes(x = ID1, y= mean)) +
-  #geom_point(alpha=0.5) +
-  geom_pointrange(aes(ymin=pc2.5, ymax=pc97.5, color=var), alpha=0.2, fatten = 0.5)+
-  facet_col("site", strip.position = "right", scales = "free_x") +
-  labs(title = NULL, x="Week", y="predicted WUE") +
-  #theme_classic(base_size = 12)+
-  theme(legend.position = "top",
-        legend.text=element_text(size=12),
-        text = element_text(size=12),
-        legend.title = element_blank(),
-        panel.background = element_rect(fill="white"),
-        axis.line = element_line(color = "black"),
-        axis.text.x = element_text(colour="black"),
-        plot.title = element_text(hjust = 0.5))
-
-p4
-
-ggsave2("model_WUE_compare_CIs.png", plot = p4, path = path_out)
-
-
-
 ################################# check T/ET
 
 test <- df_daily %>%
@@ -321,14 +271,14 @@ for(i in c(1:8)){
   
 }
 
-# [1] 0.4266259
-# [1] 0.2199809
-# [1] 0.6091023
-# [1] 0.5058023
-# [1] 0.7455279
-## [1] 0.5868741
-# [1] 0.718192
-# [1] 0.7421551
+# [1] 0.422935
+# [1] 0.2112353
+# [1] 0.6121821
+# [1] 0.5080902
+# [1] 0.7420225
+# [1] 0.5890078
+# [1] 0.7049155
+# [1] 0.7222541
 
 print("E vs. ET")
 for(i in c(1:8)){
@@ -342,14 +292,14 @@ for(i in c(1:8)){
   
 }
 
-# [1] 0.278676
-# [1] 0.3174155
-# [1] 0.1749944
-# [1] 0.1830502
-# [1] 0.06559794
-## [1] 0.04142457
-# [1] 0.08144767
-# [1] 0.05050796
+# [1] 0.2077797
+# [1] 0.2683298
+# [1] 0.1299975
+# [1] 0.1634911
+# [1] 0.06258212
+# [1] 0.04729118
+# [1] 0.04517243
+# [1] 0.05410482
 
 # avg WUE
 testWUE <- df_weekly %>%
@@ -463,23 +413,12 @@ ggsave2("p_WUE_raincloud_summer.png", plot = p, path = path_out)
 
 (p <- d_B_wue_rmwinter %>%
     ggplot(aes(year, mean_WUE.pred)) + 
-    ggdist::stat_halfeye(aes(fill=Season),
-                         alpha = 0.45,
-                         ## custom bandwidth
-                         adjust = .5,
-                         ## adjust height
-                         width = .96,
-                         ## move geom to the right
-                         justification = -.1,
-                         ## remove slab interval
-                         .width = 0,
-                         point_colour = NA) +
-    geom_boxplot(aes(group=year, color = Season),
-      width = .15) +
-    geom_jitter(aes(color=Season), width = .05, alpha = .2) +
-    #gghalves::geom_half_point(aes(color=Season, group=year),side = "l", range_scale = .4, alpha = .5) +
-    scale_fill_brewer(palette = "Dark2")+
-    facet_col("site", strip.position = "right") + 
+    geom_jitter(aes(color=Season),alpha = .5, size = 1, width = 0.2) +
+    geom_boxplot(aes(group=year), width = .15) +
+    #geom_boxplot(aes(y = S, group=year), width = .15, color = "green") +
+    #geom_boxplot(aes(y = VPD, group=year), width = .15, color = "pink") +
+    scale_color_brewer(palette = "Dark2")+
+    facet_col("site", strip.position = "right", scales = "free_y") + 
     labs(title = NULL, y = expression(paste("WUE (g C / mm ", H[2], "O)")), x = NULL, fill = NULL) +
     theme_bw() +
     theme(legend.position = c(.17,0.15),
@@ -488,5 +427,268 @@ ggsave2("p_WUE_raincloud_summer.png", plot = p, path = path_out)
           axis.line = element_line(color = "black"),
           axis.text.x = element_text(size = 14, colour="black"),
           plot.title = element_text(hjust = 0.5)))
+ggsave2("p_WUE_raincloud_yearly.png", plot = p, path = path_out)
+
+############ timeseries plot
+
+df_dates <- df_daily %>%
+  group_by(site, block) %>%
+  filter(row_number()==1)
+df_weekly$year <- df_dates$year
+df_weekly$month <- df_dates$month
+df_weekly$day <- df_dates$day
+
+df_p <- df_weekly %>%
+  select(site, year, month, day,mean_WUE.pred, pc2.5_WUE.pred, pc97.5_WUE.pred)
+df_p <- left_join(df_daily, df_p, by = c("site", "year", "month", "day"))
+
+  
+df_p$date <- as.Date(df_p$date)
+sitelist <- c("US-Ses","US-Mpj","US-Vcs")
+p1 <- list()
+p2 <- list()
+for(i in c(1:3)){
+  #"#1B9E77" "#D95F02" "#7570B3" "#E7298A" "#66A61E"
+  p1[[i]] <- df_p %>%
+    filter(year == 2017) %>%
+    filter(month %in% c(3,4,5,6,7,8,9,10,11)) %>%
+    filter(site == sitelist[i]) %>%
+    ggplot() +
+    geom_pointrange(aes(date, mean_WUE.pred, ymin= pc2.5_WUE.pred, ymax= pc97.5_WUE.pred, color = "WUE"), alpha = .7, size = .2) +
+    geom_line(aes(date, mean_E.model, color = "E")) +
+    geom_ribbon(aes(x=date, ymin= pc2.5_E.model, ymax= pc97.5_E.model),fill = "#D95F02", alpha =.5) +
+    geom_line(aes(date, mean_T.pred, color = "T")) +
+    geom_ribbon(aes(x=date, ymin= pc2.5_T.pred, ymax= pc97.5_T.pred),fill = "#1B9E77", alpha =.5) +
+    labs(color = NULL, fill = NULL) +
+    ylab("T or E (mm)") +  xlab(NULL) +
+    scale_color_manual(values = c("#1B9E77", "#D95F02", "black", "#E7298A"), limits = c("T", "E", "P", "WUE"))+
+    facet_col("site", strip.position = "right", scales = "free_y") + 
+    scale_x_date(date_labels = "%b-%Y") +
+    theme_bw()+
+    theme(legend.position = "top",
+          legend.text=element_text(size=14),
+          text = element_text(size=14),
+          axis.line = element_line(color = "black"),
+          axis.text.x = element_text(size = 14, colour="black"),
+          plot.title = element_text(hjust = 0.5))
+  p2[[i]] <- df_p %>%
+    filter(year == 2017) %>%
+    filter(month %in% c(3,4,5,6,7,8,9,10,11)) %>%
+    filter(site == sitelist[i]) %>%
+    ggplot() +
+    geom_line(aes(date, P), color="black") +
+    labs(color = NULL, fill = NULL) +
+    ylab("P (mm)") + xlab(NULL) +
+    facet_col("site", strip.position = "right", scales = "free_y") +
+    scale_x_date(date_labels = "%b-%Y") +
+    theme_bw()+
+    theme(legend.position = "none",
+          legend.text=element_text(size=14),
+          text = element_text(size=14),
+          axis.line = element_line(color = "black"),
+          axis.text.x = element_text(size = 14, colour="black"),
+          plot.title = element_text(hjust = 0.5))
+  
+  #p3 <- grid.arrange(p1[[i]], p2[[i]])
+}
+
+layout <- '
+A
+B
+C
+D
+E
+F
+'
+
+remove_x <- theme(
+  axis.text.x = element_blank(),
+  axis.ticks.x = element_blank(),
+  axis.title.x = element_blank()
+)
+
+p <- wrap_plots(A = p1[[1]]+ remove_x, B = p2[[1]]+ remove_x, C = p1[[2]]+ remove_x,D = p2[[2]]+ remove_x,E = p1[[3]]+ remove_x,F = p2[[3]], design = layout)
+p <- p + plot_layout(guides = "collect") & theme(legend.position = 'top') 
+p <- grid.arrange(patchworkGrob(p), bottom = textGrob("Date", gp=gpar(fontsize=14)))
+ggsave2("p_ET_timeseries.png", plot = p, path = path_out, width = 5, height = 8)
+
+# Novick 2016-inspired graph
+
+sitelist <- c("US-Ses","US-Mpj","US-Vcs")
+p1 <- list()
+p2 <- list()
+p3 <- list()
+for(i in c(1:3)){
+  #"#1B9E77" "#D95F02" "#7570B3" "#E7298A" "#66A61E"
+  p1[[i]] <- df_p %>%
+    filter(year == 2017) %>%
+    filter(month %in% c(3,4,5,6,7,8,9,10,11)) %>%
+    filter(site == sitelist[i]) %>%
+    ggplot() +
+    geom_pointrange(aes(date, mean_WUE.pred, ymin= pc2.5_WUE.pred, ymax= pc97.5_WUE.pred, color = "WUE (g C/mm H2O)"), alpha = .7, size = .2) +
+    geom_line(aes(date, mean_E.model, color = "E (mm)")) +
+    geom_ribbon(aes(x=date, ymin= pc2.5_E.model, ymax= pc97.5_E.model),fill = "#D95F02", alpha =.5) +
+    geom_line(aes(date, mean_T.pred, color = "T (mm)")) +
+    geom_ribbon(aes(x=date, ymin= pc2.5_T.pred, ymax= pc97.5_T.pred),fill = "#1B9E77", alpha =.5) +
+    labs(color = NULL, fill = NULL) +
+    ylab(NULL) +  xlab(NULL) +
+    scale_color_manual(values = c("#1B9E77", "#D95F02", "black", "#E7298A"), limits = c("T (mm)", "E (mm)", "P (mm)", "WUE (g C/mm H2O)"))+
+    facet_col("site", strip.position = "right", scales = "free_y") + 
+    scale_x_date(date_labels = "%b-%Y") +
+    theme_bw()+
+    theme(legend.position = "top",
+          legend.text=element_text(size=14),
+          strip.background = element_blank(),
+          strip.text = element_blank(),
+          text = element_text(size=14),
+          axis.line = element_line(color = "black"),
+          axis.text.x = element_text(size = 14, colour="black"),
+          plot.title = element_text(hjust = 0.5))
+  p2[[i]] <- df_p %>%
+    filter(year == 2017) %>%
+    filter(month %in% c(3,4,5,6,7,8,9,10,11)) %>%
+    filter(site == sitelist[i]) %>%
+    ggplot() +
+    geom_line(aes(date, P), color="#666666") +
+    labs(color = NULL, fill = NULL) +
+    ylab(NULL) + xlab(NULL) +
+    facet_col("site", strip.position = "right", scales = "free_y") +
+    scale_x_date(date_labels = "%b-%Y") +
+    theme_bw()+
+    theme(legend.position = "none",
+          legend.text=element_text(size=14),
+          strip.background = element_blank(),
+          strip.text = element_blank(),
+          text = element_text(size=14),
+          axis.line = element_line(color = "black"),
+          axis.text.x = element_text(size = 14, colour="black"),
+          plot.title = element_text(hjust = 0.5))
+  
+  p3[[i]] <- df_p %>%
+    filter(site == sitelist[i]) %>%
+    pivot_longer(cols = c(mean_E.model, mean_T.pred)) %>%
+    ggplot(aes(x = VPD, y = value)) +
+    geom_point(aes(y = value, color = name), alpha = .5, size = .1)+
+    stat_smooth(aes(group = name),color = "black", method = 'loess', span = 0.3, size = 1.7) +
+    stat_smooth(aes(color = name), method = 'loess', span = 0.3, size = .7) +
+    labs(color = NULL, fill = NULL) +
+    ylim(0,3) + xlim(0,4) +
+    ylab(NULL) +  xlab("VPD") +
+    scale_color_manual(values = c("#D95F02", "#1B9E77"), labels = c("E", "T")) +
+    facet_col("site", strip.position = "right", scales = "free_y") + 
+    theme_bw()+
+    theme(legend.position = "none",
+          legend.text=element_text(size=14),
+          text = element_text(size=14),
+          axis.line = element_line(color = "black"),
+          axis.text.x = element_text(size = 14, colour="black"),
+          plot.title = element_text(hjust = 0.5))
+}
+
+remove_x <- theme(
+  axis.text.x = element_blank(),
+  axis.ticks.x = element_blank(),
+  axis.title.x = element_blank()
+)
+remove_x_label <- theme(
+  axis.title.x = element_blank()
+)
+remove_legend <- theme(
+  legend.position = "none"
+)
+
+layout <- "
+AAG
+BBG
+CCH
+DDH
+EEI
+JJI
+"
+
+legend_b <- get_legend(p1[[1]])# + theme(legend.position="top"))
+
+p <- wrap_plots(A = p1[[1]]+ remove_x+remove_legend, B = p2[[1]]+ remove_x+remove_legend, C = p1[[2]]+ remove_x+remove_legend,D = p2[[2]]+ remove_x+remove_legend,E = p1[[3]]+ remove_x+remove_legend, J = p2[[3]]+remove_legend, 
+                G = p3[[1]]+remove_x+remove_legend, H = p3[[2]]+remove_x+remove_legend, I = p3[[3]]+remove_legend,design = layout)
+p <- grid.arrange(patchworkGrob(p), top = legend_b)
+ggsave2("p_ET_timeseries2.png", plot = p, path = path_out, width = 6, height = 8)
+
+
+
+
+df_p2 <- df_weekly %>%
+  mutate(SWC = (S+Smid+Sdeep)/2) %>%
+  group_by(site) %>%
+  summarise(group = as.numeric(cut_number(SWC,5)), site = site, VPD = VPD, mean_WUE.pred = mean_WUE.pred) %>%
+  ungroup()
+
+df_p2$group <- as.factor(df_p2$group)
+
+
+p1 <- d_B_wue_rmwinter %>%
+    ggplot(aes(y = mean_WUE.pred)) + 
+    ggdist::stat_halfeye(aes(fill=Season),
+                         alpha = 0.45,
+                         ## custom bandwidth
+                         adjust = .5, 
+                         ## adjust height
+                         width = .96, 
+                         ## move geom to the right
+                         justification = -.2, 
+                         ## remove slab interval
+                         .width = 0, 
+                         point_colour = NA) +
+    geom_boxplot(
+      width = .20) +
+    scale_fill_brewer(palette = "Dark2")+
+  facet_row("site", strip.position = "bottom") +
+    labs(title = NULL, y = NULL, x = NULL, fill = NULL) +
+    theme(legend.position = c(.17,0.8),
+          legend.text=element_text(size=14),
+          strip.background =element_rect(fill="white"),
+          strip.placement = "outside",
+          strip.text = element_text(size=12),
+          text = element_text(size=12.5),
+          axis.text.x = element_blank(),
+          axis.ticks.x = element_blank(),
+          axis.title.x = element_blank(),
+          panel.background = element_rect(fill="white"),
+          axis.line = element_line(color = "black"),
+          plot.title = element_text(hjust = 0.5))
+
+p2 <- df_p2 %>%
+  filter(site != "US-Vcm1") %>%
+  ggplot(aes(x = VPD, y = mean_WUE.pred)) +
+  geom_point(aes(fill = site), color = "black", pch=21, alpha = .2, size = .7)+
+  geom_smooth(color = "black",size = 1.5) +
+  geom_smooth(aes(color = site),size = 1) +
+  #stat_smooth(aes(color = site), method = 'loess', size = .5) +
+  labs(color = NULL, fill = NULL) +
+  ylab(NULL) +  xlab("VPD (kPa)") +
+  scale_fill_brewer(palette = "RdYlBu")+
+  scale_color_brewer(palette = "RdYlBu")+
+  facet_row("site", strip.position = "right") + 
+  theme(legend.position = "none",
+        legend.text=element_text(size=14),
+        strip.background = element_blank(),
+        strip.text = element_blank(),
+        text = element_text(size=14),
+        panel.background = element_rect(fill="white"),
+        axis.line = element_line(color = "black"),
+        axis.text.x = element_text(size = 14, colour="black"),
+        plot.title = element_text(hjust = 0.5))
+
+
+layout <- "
+A
+B
+"
+
+leftlabel <- expression(paste("WUE (g C / mm ", H[2], "O)"))
+
+p <- wrap_plots(A = p1 + remove_x, B = p2, design = layout)
+p <- grid.arrange(p1,p2, left = textGrob(leftlabel, rot = 90, gp=gpar(fontsize=14)))
+ggsave2("p_WUE_VPD.png", plot = p, path = path_out, width = 5.2, height = 6)
+
 
 

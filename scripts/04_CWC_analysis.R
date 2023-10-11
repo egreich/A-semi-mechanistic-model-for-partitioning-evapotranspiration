@@ -37,7 +37,7 @@ for(i in c(1:8)){
   filename <- paste("./clean_data/dataIN_", key[i], ".RData", sep="")
   load(filename)
   d_IN <- get(paste("dataIN_",key[i],sep=""))
-  filename <- paste("./output_dfs/df_sum_", key[i], ".csv", sep="")
+  filename <- paste("./output_dfs/df_sum_noECO_", key[i], ".csv", sep="")
   d_temp <- read.csv(filename)
   d_T_list[[i]] <- d_IN %>%
     mutate(B_T = d_temp$mean[d_temp$var == "T.pred"],
@@ -48,7 +48,7 @@ for(i in c(1:8)){
   filename <- paste("./clean_data/dataIN_wue_", key[i], ".RData", sep="")
   load(filename)
   d_IN <- get(paste("dataIN_wue_",key[i],sep=""))
-  filename <- paste("./output_dfs/df_sum_", key[i], ".csv", sep="")
+  filename <- paste("./output_dfs/df_sum_noECO_", key[i], ".csv", sep="")
   d_temp <- read.csv(filename)
   d_wue_list[[i]] <- d_IN %>%
     mutate(B_WUE = d_temp$mean[d_temp$var == "WUE.pred"])
@@ -57,8 +57,8 @@ for(i in c(1:8)){
 # Key to determine which chunks to run
 # 0 means don't run, 1 means run but don't make graphs, 2 means run and make graphs
 testWUE=2
-testT=0
-testT_ratio=0
+testT=2
+testT_ratio=2
 
 
 ##############################################################################################################
@@ -73,7 +73,7 @@ var_label_list <- c("P", "LAI", "VPD", "SWCshall","SWCdeep","Tair", "Tsoil", "PA
 
 
 sublist3 <- list() # biwavelet level
-sublist2 <- list(sublist3, sublist3, sublist3, sublist3, sublist3, sublist3, sublist3) # var level
+sublist2 <- list(sublist3, sublist3, sublist3, sublist3, sublist3, sublist3, sublist3, sublist3) # var level
 names(sublist2) <- var_label_list # name variables
 wtc.mat <- list(sublist2, sublist2, sublist2, sublist2, sublist2, sublist2, sublist2, sublist2) # site level
 names(wtc.mat) <- site_label_list
@@ -96,7 +96,7 @@ for(i in c(1:8)){ # site level
     t1 = cbind(c(1:nrow(d_B_wue_temp)), d_var_temp)
     t2 = cbind(c(1:nrow(d_B_wue_temp)), d_B_wue_temp$B_WUE)
     
-    nrands = 1000
+    nrands = 10 # temp 1000
     
     wtc.AB = wtc(t1, t2, nrands = nrands)
     wtc.mat[[i]][[k]] <- wtc.AB
@@ -203,46 +203,6 @@ d_CWC_WUE_longer_phase <- pivot_longer(d_CWC_WUE, cols = c(19:26), names_to = "v
 d_CWC_WUE_longer <- d_CWC_WUE_longer %>%
   select(site,period,var,rsq.avg) %>%
   mutate(sd = d_CWC_WUE_longer_sd$sd, phase = d_CWC_WUE_longer_phase$phase)
-
-# # pivot_longer sds
-# temp <- c()
-# var_list <- c("P", "LAI", "VPD", "SWC", "Tair", "Tsoil", "PAR")
-# col_list <-c("P.s", "LAI.s", "VPD.s", "SWC.s", "Tair.s", "Tsoil.s", "PAR.s")
-# for( i in c(1:length(var_list))){
-#   for( j in c(1:nrow(d_CWC_WUE_longer))){
-#     
-#     # if the var name in the df row matches i
-#     # then assign the correct sd value to temp
-#     if(grepl(var_list[i],d_CWC_WUE_longer$var[j])){
-#       temp2 <- select(d_CWC_WUE_longer,contains(col_list[i]))[j,]
-#       temp[[j]] <- as.numeric(temp2)
-#     }
-#     
-#   }
-# }
-# d_CWC_WUE_longer <- d_CWC_WUE_longer %>% 
-#   mutate(sd = temp) %>%
-#   select(-contains(col_list))
-# 
-# # pivot_longer phases
-# temp <- c()
-# var_list <- c("P", "LAI", "VPD", "SWC", "Tair", "Tsoil", "PAR")
-# col_list <-c("P.p", "LAI.p", "VPD.p", "SWC.p", "Tair.p", "Tsoil.p", "PAR.p")
-# for( i in c(1:length(var_list))){
-#   for( j in c(1:nrow(d_CWC_WUE_longer))){
-#     
-#     # if the var name in the df row matches i
-#     # then assign the correct sd value to temp
-#     if(grepl(var_list[i],d_CWC_WUE_longer$var[j])){
-#       temp2 <- select(d_CWC_WUE_longer,contains(col_list[i]))[j,]
-#       temp[[j]] <- as.numeric(temp2)
-#     }
-#     
-#   }
-# }
-# d_CWC_WUE_longer <- d_CWC_WUE_longer %>% 
-#   mutate(phase = temp) %>%
-#   select(-contains(col_list))
 
 d_CWC_WUE_longer$sd <- as.numeric(d_CWC_WUE_longer$sd)
 d_CWC_WUE_longer$phase <- as.numeric(d_CWC_WUE_longer$phase)

@@ -1,13 +1,5 @@
 post_ETpart <- function(s, ECOSTRESS=T){
   
-  # Create necessary folders if they do not already exist
-  if(!file.exists("output_dfs")) { dir.create("output_dfs")}
-  
-  # Get the chain and site info for each slurm job:
-  slurm <- read.csv("Slurm_jobs_3chains.csv")
-  chains = slurm$chainEND
-  sites = slurm$siteEND
-  
   # key for which site corresponds to which site ID
   if(s == 1){
     key = "seg"
@@ -27,13 +19,28 @@ post_ETpart <- function(s, ECOSTRESS=T){
     key = "vcs"
   }
   
+  # Create necessary folders if they do not already exist
+  if(!file.exists("output_dfs")) { dir.create("output_dfs")}
+  if(!file.exists("models/convergence")) { dir.create("models/convergence")}
+  if(!file.exists(paste("models/convergence/", key, sep = ""))) { dir.create(paste("models/convergence/", key, sep = ""))}
+  if(!file.exists(paste("models/convergence/", key, "_noECO", sep = ""))) { dir.create(paste("models/convergence/", key, "_noECO", sep = ""))}
+  
+  # Get the chain and site info for each slurm job:
+  slurm <- read.csv("Slurm_jobs_3chains.csv")
+  chains = slurm$chainEND
+  sites = slurm$siteEND
+  
   # Define filenames
   zcfilename <- paste("./output_coda/coda_all_", key, ".RData", sep = "")
   dffilename <- paste("./output_dfs/df_sum_", key, ".csv", sep = "")
+  mcmcfoldername <- paste("./models/convergence/", key, sep = "")
+  mcmcfilename <- paste("MCMC_", key, sep = "")
   
   if(ECOSTRESS == F){
     zcfilename <- paste("./output_coda/coda_all_noECO_", key, ".RData", sep = "")
     dffilename <- paste("./output_dfs/df_sum_noECO_", key, ".csv", sep = "")
+    mcmcfoldername <- paste("./models/convergence/", key, "_noECO", sep = "")
+    mcmcfilename <- paste("MCMC_", key, "_noECO", sep = "")
   }
   
   # Combine chains into one mcmc list (coda object) for each site:
@@ -53,7 +60,7 @@ post_ETpart <- function(s, ECOSTRESS=T){
     load(paste("./output_coda/zc_", c,"_", key, ".RData", sep = ""))
     }
     if(ECOSTRESS == F){
-    load(paste("./output_coda/coda_all_noECO_", c,"_", key, ".RData", sep = ""))
+    load(paste("./output_coda/zc_noECO_", c,"_", key, ".RData", sep = ""))
     }
     # Create coda objects with all chains:
     coda_all[[c]] <- as.mcmc(zc1[[1]])
@@ -82,6 +89,20 @@ post_ETpart <- function(s, ECOSTRESS=T){
     mutate(site = key)
   
   write.csv(df_sum, dffilename)
+  
+  # MCMC plots
+  
+  params = c("ET", "E.model", "ET.pred", "ET.rep", "T.pred", "T.ratio",
+             "WUE.annual","WUE.overall.annual", "WUE.overall.postmonsoon",
+             "WUE.overall.spring","WUE.overall.summer", "WUE.overall.winter",
+             "WUE.postmonsoon", "WUE.pred", "WUE.spring","WUE.summer", "WUE.wght", "WUE.winter",
+             'bch.pred', "deviance", 'fc.pred', 'k.pred', "p", 'psisat.pred', "sig.ET","sig.WUE", 
+             "sig.ecostress", "slope", 'ssat.pred', 'sres.pred', "tau.ecostress", 'vk.pred')
+  
+  mcmcplot(coda_all_noECO, parms = params,
+           random = 15, # so we'll only save 15 random plots for the longer variables to save space
+           dir = mcmcfoldername,
+           filename = mcmcfilename)
 }
 
 

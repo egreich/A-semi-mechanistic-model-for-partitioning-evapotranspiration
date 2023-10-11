@@ -1,6 +1,6 @@
-### This script file will make site dataframes using the Bucket method derivation equations found in Merlin et al 2016
+### This script file will make site dataframes using the soil evaporation equations found in Merlin et al 2016
 ### to set up values to feed into the Bayesian model
-### using Ameriflux tower data, PI- and self- gapfilled flux tower data, ECOSTRESS WUE point data, and MODIS LAI data
+### using Ameriflux tower data, PI and self gap-filled flux tower data, ECOSTRESS WUE point estimates, and MODIS LAI product
 
 library(tidyverse)
 library("zoo") # fill_LAI function is dependent on this
