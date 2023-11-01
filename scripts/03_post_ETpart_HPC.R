@@ -16,24 +16,14 @@ source("./scripts/post_ETpart_HPC_function.R")
 source("./scripts/coda_functions.R")
 
 ### recombine chains, summarize as a dataframe ###
-post_ETpart(1, ECOSTRESS = F)
-post_ETpart(2, ECOSTRESS = F)
-post_ETpart(3, ECOSTRESS = F)
-post_ETpart(4, ECOSTRESS = F)
-post_ETpart(5, ECOSTRESS = F)
-post_ETpart(6, ECOSTRESS = F)
-post_ETpart(7, ECOSTRESS = F)
-post_ETpart(8, ECOSTRESS = F)
-
-
-# post_ETpart(1)
-# post_ETpart(2)
-# post_ETpart(3)
-# post_ETpart(4)
-# post_ETpart(5)
-# post_ETpart(6)
-# post_ETpart(7)
-# post_ETpart(8)
+post_ETpart(1)
+post_ETpart(2)
+post_ETpart(3)
+post_ETpart(4)
+post_ETpart(5)
+post_ETpart(6)
+post_ETpart(7)
+post_ETpart(8)
 
 
 ### Run this to recombine output with original timeseries ###

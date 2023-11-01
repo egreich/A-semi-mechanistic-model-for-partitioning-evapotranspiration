@@ -7,14 +7,15 @@
 #SBATCH --mem=70000
 #SBATCH --mail-type=all
 #SBATCH --mail-user=egr65@nau.edu
-#SBATCH --array=1-24
+#SBATCH --array=1-6,10-12,16-18,19-21
+##SBATCH --array=1-24
 
 ### %A is monsoon job number %a is interior array index
 
 module load R/4.1.2 # load a specific R version
 
 chmod +x ./shell_scripts/run_ETpart_job.sh # for permissions
-chmod +x ./scripts/02_run_ETpart_HPC.R # for permissions
+chmod +x ./scripts/02_run_ETpart.R # for permissions
 
 chain=$(sed -n "$SLURM_ARRAY_TASK_ID"p chainEND)
 site=$(sed -n "$SLURM_ARRAY_TASK_ID"p siteEND)

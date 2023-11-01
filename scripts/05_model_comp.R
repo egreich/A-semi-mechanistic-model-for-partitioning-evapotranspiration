@@ -66,21 +66,21 @@ d_all <- d_comb %>%
          T_ratio_sap = Tc_with.gaps/ET.sap)
 
 sum(d_all$Tc_with.gaps, na.rm = T)/sum(d_all$ET.sap, na.rm = T) #  0.2803601
-sum(d_all$mean_T.pred, na.rm = T)/sum(d_all$ET.DEPART, na.rm = T) # 0.9297827
+sum(d_all$mean_T.pred, na.rm = T)/sum(d_all$ET.DEPART, na.rm = T) # 0.9111486
 sum(d_all$transpiration_mod, na.rm = T)/sum(d_all$ET.Perez, na.rm = T) # 0.6006477
 
 corr <-cor.test(d_all$mean_T.pred, y=d_all$Tc_with.gaps, method = 'spearman')
-corr # 0.582385
+corr # 0.5850125
 
 corr <- cor.test(d_all$transpiration_mod, y=d_all$Tc_with.gaps, method = 'spearman')
 corr # 0.7072604 
 
 corr <-cor.test(d_all$transpiration_mod, y=d_all$mean_T.pred, method = 'spearman')
-corr # 0.5309934 
+corr # 0.5322696
 
 
 corr <- cor.test(d_all$mean_T.pred, y=d_all$ET.DEPART, method = 'spearman')
-corr # 0.7756175
+corr # 0.7749261
 
 corr <- cor.test(d_all$transpiration_mod, y=d_all$ET.Perez, method = 'spearman')
 corr #0.4093375 
@@ -94,21 +94,21 @@ d_all_dry <- d_all %>%
   filter(P==0)
 
 sum(d_all_dry$Tc_with.gaps, na.rm = T)/sum(d_all_dry$ET.sap, na.rm = T) #  0.3059205
-sum(d_all_dry$mean_T.pred, na.rm = T)/sum(d_all_dry$ET.DEPART, na.rm = T) #  0.9781772
+sum(d_all_dry$mean_T.pred, na.rm = T)/sum(d_all_dry$ET.DEPART, na.rm = T) #  0.958562
 sum(d_all_dry$transpiration_mod, na.rm = T)/sum(d_all_dry$ET.Perez, na.rm = T) # 0.6488305
 
 corr <-cor.test(d_all_dry$mean_T.pred, y=d_all_dry$Tc_with.gaps, method = 'spearman')
-corr # 0.593799  
+corr # 0.5965448  
 
 corr <- cor.test(d_all_dry$transpiration_mod, y=d_all_dry$Tc_with.gaps, method = 'spearman')
 corr # 0.6811811 
 
 corr <-cor.test(d_all_dry$transpiration_mod, y=d_all_dry$mean_T.pred, method = 'spearman')
-corr # 0.5319222
+corr # 0.533164
 
 
 corr <- cor.test(d_all_dry$mean_T.pred, y=d_all_dry$ET.DEPART, method = 'spearman')
-corr # 0.8360074
+corr # 0.8353175
 
 corr <- cor.test(d_all_dry$transpiration_mod, y=d_all_dry$ET.Perez, method = 'spearman')
 corr # 0.4852964
@@ -116,58 +116,4 @@ corr # 0.4852964
 corr <- cor.test(d_all_dry$Tc_with.gaps, y=d_all_dry$ET.sap, method = 'spearman')
 corr # 0.5574804
 
-
-#############################################################################################
-
-
-# Perez
-# temporarily narrow down so we're comparing across the same time periods
-depart_perez <- d_comb %>%
-  filter(!is.na(transpiration_mod))
-
-sum(depart_perez$transpiration_mod, na.rm = T)/sum(depart_perez$ET.Perez, na.rm = T) #  0.4459782
-sum(depart_perez$mean_T.pred, na.rm = T)/sum(depart_perez$ET.DEPART, na.rm = T) # 0.8595321
-
-corr <-cor.test(depart_perez$transpiration_mod, y=depart_perez$mean_T.pred, method = 'spearman')
-corr # 0.6761234
-
-corr <- cor.test(depart_perez$mean_T.pred, y=depart_perez$ET.DEPART, method = 'spearman')
-corr # 0.7753935
-
-corr <- cor.test(depart_perez$transpiration_mod, y=depart_perez$ET.Perez, method = 'spearman')
-corr # 0.4563602
-
-depart_perez_dry <- depart_perez %>% # remove rain events
-  filter(P==0)
-
-sum(depart_perez_dry$transpiration_mod, na.rm = T)/sum(depart_perez_dry$ET.Perez, na.rm = T) #  0.4942368
-sum(depart_perez_dry$mean_T.pred, na.rm = T)/sum(depart_perez_dry$ET.DEPART, na.rm = T) # 0.9240487
-
-corr <-cor.test(depart_perez_dry$transpiration_mod, y=depart_perez_dry$mean_T.pred, method = 'spearman')
-corr # 0.6533538
-
-corr <- cor.test(depart_perez_dry$mean_T.pred, y=depart_perez_dry$ET.DEPART, method = 'spearman')
-corr # 0.8159936
-
-corr <- cor.test(depart_perez_dry$transpiration_mod, y=depart_perez_dry$ET.Perez, method = 'spearman')
-corr # 0.4934728
-
-
-# Sapflow
-# temporarily narrow down so we're comparing across the same time periods
-depart_sap <- d_comb %>%
-  filter(!is.na(Tc_with.gaps))
-
-sum(depart_sap$Tc_with.gaps, na.rm = T)/sum(depart_sap$ET.sap, na.rm = T) #  0.247803
-sum(depart_sap$mean_T.pred, na.rm = T)/sum(depart_sap$ET.DEPART, na.rm = T) # 0.8797978
-
-
-# Sapflow and Perez
-# temporarily narrow down so we're comparing across the same time periods
-perez_sap <- d_comb %>%
-  filter(!is.na(Tc_with.gaps)) %>%
-  filter(!is.na(transpiration_mod))
-
-sum(perez_sap$Tc_with.gaps, na.rm = T)/sum(perez_sap$ET.sap, na.rm = T) #  0.2803601
-sum(perez_sap$transpiration_mod, na.rm = T)/sum(perez_sap$ET.Perez, na.rm = T) # 0.6006477
 

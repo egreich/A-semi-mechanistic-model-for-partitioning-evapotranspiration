@@ -1,4 +1,5 @@
-### Purpose -- Partition ET using ET/GPP slope and intercept based on monthly sums at NMEG sites.
+### Partition ET using ET/GPP slope and intercept based on monthly sums at NMEG sites (Scott and Biederman method).
+### Create a graph comparing the longterm output of the Scott and Beiderman method with the DEPART estimates, Perez-Priego estimates, and the sapflow-based estimates
 
 library(tidyverse)
 library(ggforce)
@@ -172,7 +173,7 @@ p1<- ggplot(data = df_comp, aes(x=month)) +
   geom_line(aes(y=depart_T.ratio, color = "DEPART")) +
   geom_line(aes(y=perez_T.ratio, color = "Pérez-Priego")) +
   geom_line(aes(y=sap_T.ratio, color = "Sapflow")) +
-  scale_color_manual(values = c("#1B9E77", "#D95F02", "#7570B3", "#666666")) +
+  scale_color_manual(values = c("#1B9E77", "#D95F02", "#7570B3", "black")) +
   facet_row("site", strip.position = "top") +
   ylab("T/ET") +
   theme_bw() +

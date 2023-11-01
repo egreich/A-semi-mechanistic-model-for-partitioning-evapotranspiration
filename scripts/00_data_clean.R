@@ -1,6 +1,8 @@
-### This script file will make site dataframes using the soil evaporation equations found in Merlin et al 2016
+### This script file will make site dataframes and linear interpolate small data gaps
+### and calculate parameters to feed into the soil evaporation equations used in DEPART
 ### to set up values to feed into the Bayesian model
-### using Ameriflux tower data, PI and self gap-filled flux tower data, ECOSTRESS WUE point estimates, and MODIS LAI product
+### using Ameriflux tower data, PI and self gap-filled flux tower data, and MODIS LAI product
+### ECOSTRESS WUE point estimates are read in for comparison
 
 library(tidyverse)
 library("zoo") # fill_LAI function is dependent on this

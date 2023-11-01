@@ -1,8 +1,8 @@
 #!/usr/bin/env Rscript
 
-# Functions for data cleaning
+### Functions for data cleaning
 
-# Function to convert dates to water years
+### Function to convert dates to water years
 wtr_yr <- function(dates, start_month=10) {
   # Convert dates into POSIXlt
   dates.posix = as.POSIXlt(dates)
@@ -15,12 +15,12 @@ wtr_yr <- function(dates, start_month=10) {
 }
 
 
-# Function to calculate accumulated precipitation
+### Function to calculate accumulated precipitation
 sumr.P <- function(x) {
   sapply(1:length(x), function(i) sum(x[1:i], na.rm = TRUE)) # I want to ignore the NA values
 }
 
-# Function to calculate accumulated P by water year
+### Function to calculate accumulated P by water year
 sumr.wtryP <- function(site){
   output_list <- list()
   year <- unique(site$water_year)
@@ -39,7 +39,7 @@ sumr.wtryP <- function(site){
   
 }
 
-# Function to gap-fill wind speed
+### Function to gap-fill wind speed
 fill_ws <- function(site){
   ws_list <- site$ws
   prev_ws <- NA
@@ -65,7 +65,7 @@ fill_ws <- function(site){
   
 }
 
-# Function to gap-fill LAI
+### Function to gap-fill LAI
 fill_leaf <- function(site){
   LAI_list <- site$LAI_mod
   fill_first <- NA
@@ -101,7 +101,7 @@ fill_leaf <- function(site){
   return(site)
 }
 
-# Function to calculate evaporation, based on descriptions of methods in Merlin et al. 2016
+### Function to calculate evaporation, based on descriptions of methods in Merlin et al. 2016
 get_evap <- function(site) {
   
   # Define constants for calculating vapor pressure. Constants from a Vaisala publication .
@@ -208,7 +208,7 @@ get_evap <- function(site) {
   return(site_Ei)
 }
 
-# Function to assign block IDs to rows
+### Function to assign block IDs to rows
 assign_block <- function(input, window) {
   last <- 0
   block <- NA

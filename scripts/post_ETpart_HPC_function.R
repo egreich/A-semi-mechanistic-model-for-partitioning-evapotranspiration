@@ -1,4 +1,4 @@
-post_ETpart <- function(s, ECOSTRESS=T){
+post_ETpart <- function(s){
   
   # key for which site corresponds to which site ID
   if(s == 1){
@@ -33,15 +33,8 @@ post_ETpart <- function(s, ECOSTRESS=T){
   # Define filenames
   zcfilename <- paste("./output_coda/coda_all_", key, ".RData", sep = "")
   dffilename <- paste("./output_dfs/df_sum_", key, ".csv", sep = "")
-  mcmcfoldername <- paste("./models/convergence/", key, sep = "")
+  mcmcfoldername <- paste("./models/convergence/", key, "_noECO", sep = "")
   mcmcfilename <- paste("MCMC_", key, sep = "")
-  
-  if(ECOSTRESS == F){
-    zcfilename <- paste("./output_coda/coda_all_noECO_", key, ".RData", sep = "")
-    dffilename <- paste("./output_dfs/df_sum_noECO_", key, ".csv", sep = "")
-    mcmcfoldername <- paste("./models/convergence/", key, "_noECO", sep = "")
-    mcmcfilename <- paste("MCMC_", key, "_noECO", sep = "")
-  }
   
   # Combine chains into one mcmc list (coda object) for each site:
   
@@ -56,12 +49,7 @@ post_ETpart <- function(s, ECOSTRESS=T){
 
   for(c in 1:length(r)){
     # Load single-chain coda objects
-    if(ECOSTRESS == T){
     load(paste("./output_coda/zc_", c,"_", key, ".RData", sep = ""))
-    }
-    if(ECOSTRESS == F){
-    load(paste("./output_coda/zc_noECO_", c,"_", key, ".RData", sep = ""))
-    }
     # Create coda objects with all chains:
     coda_all[[c]] <- as.mcmc(zc1[[1]])
   }
@@ -72,7 +60,7 @@ post_ETpart <- function(s, ECOSTRESS=T){
 
   # Extract mean and 2.5 and 97.5 quantiles from summary tables
   
-  # Summarizing chains via Mike Fell's code
+  # Summarizing chains via Mike Fell's code with some edits
   df_sum <- coda.fast(chains=3, burn.in=0, thin=1, coda=coda_all)
   df_sum <- rownames_to_column(df_sum, "var")
   df_sum <- df_sum %>% # make index column
@@ -97,9 +85,9 @@ post_ETpart <- function(s, ECOSTRESS=T){
              "WUE.overall.spring","WUE.overall.summer", "WUE.overall.winter",
              "WUE.postmonsoon", "WUE.pred", "WUE.spring","WUE.summer", "WUE.wght", "WUE.winter",
              'bch.pred', "deviance", 'fc.pred', 'k.pred', "p", 'psisat.pred', "sig.ET","sig.WUE", 
-             "sig.ecostress", "slope", 'ssat.pred', 'sres.pred', "tau.ecostress", 'vk.pred')
+             "slope", 'ssat.pred', 'sres.pred', 'vk.pred')
   
-  mcmcplot(coda_all_noECO, parms = params,
+  mcmcplot(coda_all, parms = params,
            random = 15, # so we'll only save 15 random plots for the longer variables to save space
            dir = mcmcfoldername,
            filename = mcmcfilename)

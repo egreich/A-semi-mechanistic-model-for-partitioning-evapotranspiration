@@ -16,3 +16,7 @@ output_dfs/*
 output_dfs_new/*
 output_dfs.zip
 plots/*
+
+# Suppress scripts we used to explore the output
+07a_output_summary.R
+07b_CWC_output_summary.R

@@ -3,7 +3,7 @@
 model{
   
   for(i in 1:N){
-    # Likelihood for ET data
+    # Likelihood for ET data; UNITS?
     ET[i] ~ dnorm(ET.pred[i], tau.ET)
     ET.rep[i] ~ dnorm(ET.pred[i], tau.ET) # replicated data for evaluating model fit
     ET.pred[i] <- E.model[i] + T.pred[i]
@@ -35,6 +35,7 @@ model{
     # Soil evaporation from E2 (CLM 3.5)
     LE3.5[i] <- ifelse(Tsoil[i] >= 0, ((rho[i]*Cp)/gamma[i])*((alpha[i]*(e.sat[i] - e.a[i]))/(rah[i] + rss[i])), 0)
     Esoil3.5[i] <- conv.fact[i]*LE3.5[i]
+    
 
     E.model[i] <- p*Esoil4.5[i] + (1-p)*Esoil3.5[i] + Eint[i] + Esnow[i]
     
@@ -67,25 +68,17 @@ model{
   WUE.pred[Nblocksplit+1] ~ dunif(0,30)
   WUE.wght[1] <- WUE.pred[1]*GPP.avg[1]
   WUE.wght[Nblocksplit+1] <- WUE.pred[Nblocksplit+1]*GPP.avg[Nblocksplit+1]
-  WUE.ecostress[1] ~ dunif(0,30)
-  WUE.ecostress[Nblocksplit+1] ~ dunif(0,30)
   for(i in 2:Nblocksplit){
     # This assumes that the precision for the "predicted" or "true" WUE of the site varies
     # around the precision for WUE derived from ECOSTRESS for that area, with some uncertainty
-    WUE.pred[i] ~ dnorm(WUE.pred[i-1], tau.ecostress)T(0,)
+    WUE.pred[i] ~ dnorm(WUE.pred[i-1], tau.WUE)T(0,)
     WUE.wght[i] <- WUE.pred[i]*GPP.avg[i]
-    # Likelihood for observed (and missing) WUE from ECOSTRESS.
-    # Model below also assumes each time block is of equal length (e.g., weekly)
-    WUE.ecostress[i] ~ dnorm(WUE.ecostress[i-1], tau.ecostress)T(0,)
   }
   for(i in (Nblocksplit+2):Nblocks){
     # This assumes that the precision for the "predicted" or "true" WUE of the site varies
     # around the precision for WUE derived from ECOSTRESS for that area, with some uncertainty
-    WUE.pred[i] ~ dnorm(WUE.pred[i-1], tau.ecostress)T(0,)
+    WUE.pred[i] ~ dnorm(WUE.pred[i-1], tau.WUE)T(0,)
     WUE.wght[i] <- WUE.pred[i]*GPP.avg[i]
-    # Likelihood for observed (and missing) WUE from ECOSTRESS.
-    # Model below also assumes each time block is of equal length (e.g., weekly)
-    WUE.ecostress[i] ~ dnorm(WUE.ecostress[i-1], tau.ecostress)T(0,)
   }
   
   
@@ -99,7 +92,7 @@ model{
   
   
   WUE.overall <- sum(WUE.wght[]) / sum(GPP.avg[])
-  WUE.overall.annual <- mean(WUE.annual[]) # take the avg of WUE annual
+  WUE.overall.annual <- mean(WUE.annual[]) # take the avg of WUE annual # add WUE.overall.winter, etc
   WUE.overall.winter <- mean(WUE.winter[])
   WUE.overall.spring <- mean(WUE.spring[])
   WUE.overall.summer <- mean(WUE.summer[])
@@ -111,8 +104,7 @@ model{
   sig.ET <- 1/sqrt(tau.ET)
   sig.WUE ~ dunif(0,20)
   tau.WUE <- pow(sig.WUE,-2)
-  sig.ecostress ~ dunif(0,10)
-  tau.ecostress <- pow(sig.ecostress,-2)
+
   
   # Priors for stochastic parameters for E equations
   vk.pred ~ dunif(0.35, 0.42) # the von Karman constant is usually 0.40
@@ -120,6 +112,7 @@ model{
   k.pred ~ dnorm(0.5, 10)T(0,) # k = 0.5 # decay function k for intercepted E
   fc.pred ~ dnorm(fc, 200)T(S.min,1) # upper limit 1
   sres.pred ~ dnorm(sres, 80000)T(0,S.min)# residual soil moisture
+  # Plot ssat to see what the range is
   ssat.pred ~ dnorm(ssat, 50)T(0,) # soil moisture at saturation
   psisat.pred ~ dnorm(psisat, 0.015)T(-1000,0)  # parameterized air entry pressure, in mm of water
 }

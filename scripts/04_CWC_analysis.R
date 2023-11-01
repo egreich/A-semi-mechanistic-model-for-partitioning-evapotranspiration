@@ -37,7 +37,7 @@ for(i in c(1:8)){
   filename <- paste("./clean_data/dataIN_", key[i], ".RData", sep="")
   load(filename)
   d_IN <- get(paste("dataIN_",key[i],sep=""))
-  filename <- paste("./output_dfs/df_sum_noECO_", key[i], ".csv", sep="")
+  filename <- paste("./output_dfs/df_sum_", key[i], ".csv", sep="")
   d_temp <- read.csv(filename)
   d_T_list[[i]] <- d_IN %>%
     mutate(B_T = d_temp$mean[d_temp$var == "T.pred"],
@@ -48,7 +48,7 @@ for(i in c(1:8)){
   filename <- paste("./clean_data/dataIN_wue_", key[i], ".RData", sep="")
   load(filename)
   d_IN <- get(paste("dataIN_wue_",key[i],sep=""))
-  filename <- paste("./output_dfs/df_sum_noECO_", key[i], ".csv", sep="")
+  filename <- paste("./output_dfs/df_sum_", key[i], ".csv", sep="")
   d_temp <- read.csv(filename)
   d_wue_list[[i]] <- d_IN %>%
     mutate(B_WUE = d_temp$mean[d_temp$var == "WUE.pred"])

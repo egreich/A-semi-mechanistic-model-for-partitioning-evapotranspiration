@@ -1,4 +1,4 @@
-### Model for Bayesian ET Partitioning
+#wue## Model for Bayesian ET Partitioning
 
 model{
   
@@ -35,7 +35,7 @@ model{
     # Soil evaporation from E2 (CLM 3.5)
     LE3.5[i] <- ifelse(Tsoil[i] >= 0, ((rho[i]*Cp)/gamma[i])*((alpha[i]*(e.sat[i] - e.a[i]))/(rah[i] + rss[i])), 0)
     Esoil3.5[i] <- conv.fact[i]*LE3.5[i]
-
+    
     E.model[i] <- p*Esoil4.5[i] + (1-p)*Esoil3.5[i] + Eint[i] + Esnow[i]
     
     # Predicted transpiration, based on assumption that transpiration is proportional
@@ -43,8 +43,7 @@ model{
     # and WUE is informed by Ecostress WUE precision
     # Note the proportionality term (slope) varies temporally, according to defined 
     # time "blocks".
-    T.pred[i] <- slope[block[i]]*GPP[i]
-    
+    T.pred[i] <- slope[block[i]]*GPP[i] # slope is the inverse water-use efficiency
     # T/ET ratio
     ET.int[i] <- ifelse(ET.pred[i]==0, 0.0000000000000001, ET.pred[i]) # intermediate calculated to ensure the denominator is not 0
     T.ratio[i] <- ifelse(ET.pred[i]==0, 0, T.pred[i]/ET.int[i])
@@ -58,7 +57,6 @@ model{
   
   # given p (proportion "contribution" pf Esoil4.5 to estimated Esoil) a prior, or set = 0.5 in data list
   p ~ dunif(0,1)
-  
 
   # for each time block
   for(i in 1:Nblocks){
@@ -68,15 +66,11 @@ model{
   # Priors for "initial conditions" for WUE.
   WUE.pred[1] ~ dunif(0,30)
   WUE.wght[1] <- WUE.pred[1]*GPP.avg[1]
-  WUE.ecostress[1] ~ dunif(0,30)
   for(i in 2:Nblocks){
     # This assumes that the precision for the "predicted" or "true" WUE of the site varies
-    # around the WUE derived from ECOSTRESS for that area, with some uncertainty
-    WUE.pred[i] ~ dnorm(WUE.pred[i-1], tau.ecostress)T(0,)
+    # around the WUE from the days around it, with some uncertainty
+    WUE.pred[i] ~ dnorm(WUE.pred[i-1], tau.WUE)T(0,)
     WUE.wght[i] <- WUE.pred[i]*GPP.avg[i]
-    # Likelihood for observed (and missing) WUE from ECOSTRESS.
-    # Model below also assumes each time block is of equal length (e.g., weekly)
-    WUE.ecostress[i] ~ dnorm(WUE.ecostress[i-1], tau.ecostress)T(0,)
   }
   
   
@@ -95,15 +89,12 @@ model{
   WUE.overall.spring <- mean(WUE.spring[])
   WUE.overall.summer <- mean(WUE.summer[])
   WUE.overall.postmonsoon <- mean(WUE.postmonsoon[])
-  
 
   # Priors for ET and WUE:
   tau.ET ~ dgamma(0.1,0.1) # since this is associated with the data model for ET.
   sig.ET <- 1/sqrt(tau.ET)
   sig.WUE ~ dunif(0,20)
   tau.WUE <- pow(sig.WUE,-2)
-  sig.ecostress ~ dunif(0,10)
-  tau.ecostress <- pow(sig.ecostress,-2)
   
   # Priors for stochastic parameters for E equations
   vk.pred ~ dunif(0.35, 0.42) # the von Karman constant is usually 0.40, but here we let it vary

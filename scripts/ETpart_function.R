@@ -13,124 +13,18 @@ ETpart <- function(dataIN, dataIN_wue, dataIN_gpp, key, chain=NULL, ECOSTRESS=T,
     initfilename <- paste("./models/inits/inits_", key, ".RData", sep = "")
     zcfilename <- paste("./output_coda/coda_all_", key, ".RData", sep = "")
     dffilename <- paste("./output_dfs/df_sum_", key, ".csv", sep = "")
-    if(ECOSTRESS == F){
-      initfilename <- paste("./models/inits/inits_noECO_", key, ".RData", sep = "")
-      zcfilename <- paste("./output_coda/coda_all_noECO_", key, ".RData", sep = "")
-      dffilename <- paste("./output_dfs/df_sum_noECO_", key, ".csv", sep = "")
-    }
   }
   # If running on an HPC, we will run a postscript later to combine chains
   if(!is.null(chain)){
-    initfilename <- paste("./models/inits/inits_", chain,"_", key, ".RData", sep = "")
+    initfilename <- paste("./models/inits/inits_noECO_", chain,"_", key, ".RData", sep = "") # temp
     zcfilename <- paste("./output_coda/zc_", chain,"_", key, ".RData", sep = "")
-    if(ECOSTRESS == F){
-      initfilename <- paste("./models/inits/inits_noECO_", chain,"_", key, ".RData", sep = "")
-      zcfilename <- paste("./output_coda/zc_noECO_", chain,"_", key, ".RData", sep = "")
-    }
   }
   
   Nblocks = length(unique(dataIN$block))
   N = nrow(dataIN)
   Nyear = nrow(dataIN_gpp)
+  
   data = list(Nblocks   = Nblocks, # Number of blocks, of n days each
-              N = N, # Number of rows
-              Nyear = Nyear,
-              block = dataIN$block,
-              WUE.ecostress = dataIN_wue$WUE,
-              Esnow = dataIN$Esnow,
-              Tsoil = dataIN$Tsoil,
-              S = dataIN$S,
-              S.min = min(dataIN$S),
-              ET = dataIN$ET,
-              GPP = dataIN$GPP,
-              ws = dataIN$ws,
-              conv.fact = (60*60*24)/((2.501 - 0.00237*dataIN$Tair)*10^6), #0.0864 * 0.408, # 1/Latent heat of vaporization (J kg-1) * seconds to day conversion to get in units of mm m-2 day-1
-              rho = dataIN$pair,
-              Ri = dataIN$Ri,
-              rah_unstable = dataIN$rah, # in the data, rah is just rah_unstable when appropriate. We are letting rah_stable vary (stochastic) so that's why we read this in.
-              Cp = 1000,
-              pi = 3.14159265359,
-              Rwv = 461.52, # specific gas constant for water vapor in J/(kg*K)
-              sres = 0.15*dataIN$fclay[1], # residual soil moisture
-              ssat = 0.489 - (0.126*dataIN$fsand[1]),
-              psisat = -10*exp(1.88-1.31*dataIN$fsand[1]), # parameterized air entry pressure, in mm of water
-              rssmin = 50, # minimum soil resistance in s/m
-              g  = 9.80665,     # acceleration due to gravity in m/s^2
-              gamma = dataIN$gamma,
-              #rah = dataIN$rah,
-              e.sat = dataIN$es,
-              e.a = dataIN$ea,
-              Z = dataIN$Z[1], # reference height (m)
-              #fclay = dataIN$fclay[1],
-              fc = dataIN$fc[1],
-              bch = 2.91 + 15.9*dataIN$fclay[1], # The Clapp and Hornberger parameter est. as in Cosby et al. [1984]
-              LAI = dataIN$LAI_mod,
-              P = dataIN$P,
-              GPP.avg = dataIN_wue$GPP_avg,
-              start = dataIN_gpp$start,
-              end = dataIN_gpp$end,
-              start.winter = dataIN_gpp$start.winter,
-              start.spring = dataIN_gpp$start.spring,
-              start.summer = dataIN_gpp$start.summer,
-              start.postmonsoon = dataIN_gpp$start.postmonsoon,
-              end.winter = dataIN_gpp$end.winter,
-              end.spring = dataIN_gpp$end.spring,
-              end.summer = dataIN_gpp$end.summer,
-              end.postmonsoon = dataIN_gpp$end.postmonsoon)
-  
-  # If running the vcp site, run the split model to account for data gaps
-  if(key == "vcp"){
-    data = list(Nblocks   = Nblocks, # Number of blocks, of n days each
-                N = N, # Number of rows
-                Nblocksplit = 243, # the index of the last block before the data gap
-                Nyear = Nyear,
-                block = dataIN$block,
-                WUE.ecostress = dataIN_wue$WUE,
-                Esnow = dataIN$Esnow,
-                Tsoil = dataIN$Tsoil,
-                S = dataIN$S,
-                S.min = min(dataIN$S),
-                ET = dataIN$ET,
-                GPP = dataIN$GPP,
-                ws = dataIN$ws,
-                conv.fact = (60*60*24)/((2.501 - 0.00237*dataIN$Tair)*10^6), # Latent heat of vaporization (J kg-1)
-                rho = dataIN$pair,
-                Ri = dataIN$Ri,
-                rah_unstable = dataIN$rah, # in the data, rah is just rah_unstable when appropriate. We are letting rah_stable vary (stochastic) so that's why we read this in.
-                Cp = 1000,
-                pi = 3.14159265359,
-                Rwv = 461.52, # specific gas constant for water vapor in J/(kg*K)
-                sres = 0.15*dataIN$fclay[1], # residual soil moisture
-                ssat = 0.489 - (0.126*dataIN$fsand[1]),
-                psisat = -10*exp(1.88-1.31*dataIN$fsand[1]), # parameterized air entry pressure, in mm of water
-                rssmin = 50, # minimum soil resistance in s/m
-                g  = 9.80665,     # acceleration due to gravity in m/s^2
-                gamma = dataIN$gamma,
-                #rah = dataIN$rah,
-                e.sat = dataIN$es,
-                e.a = dataIN$ea,
-                Z = dataIN$Z[1], # reference height (m)
-                #fclay = dataIN$fclay[1],
-                fc = dataIN$fc[1],
-                bch = 2.91 + 15.9*dataIN$fclay[1], # The Clapp and Hornberger parameter est. as in Cosby et al. [1984]
-                LAI = dataIN$LAI_mod,
-                P = dataIN$P,
-                GPP.avg = dataIN_wue$GPP_avg,
-                start = dataIN_gpp$start,
-                end = dataIN_gpp$end,
-                start.winter = dataIN_gpp$start.winter,
-                start.spring = dataIN_gpp$start.spring,
-                start.summer = dataIN_gpp$start.summer,
-                start.postmonsoon = dataIN_gpp$start.postmonsoon,
-                end.winter = dataIN_gpp$end.winter,
-                end.spring = dataIN_gpp$end.spring,
-                end.summer = dataIN_gpp$end.summer,
-                end.postmonsoon = dataIN_gpp$end.postmonsoon)
-  }
-  
-  if(ECOSTRESS == F){
-    
-    data = list(Nblocks   = Nblocks, # Number of blocks, of n days each
                 N = N, # Number of rows
                 Nyear = Nyear,
                 block = dataIN$block,
@@ -179,7 +73,7 @@ ETpart <- function(dataIN, dataIN_wue, dataIN_gpp, key, chain=NULL, ECOSTRESS=T,
     if(key == "vcp"){
       data = list(Nblocks   = Nblocks, # Number of blocks, of n days each
                   N = N, # Number of rows
-                  Nblocksplit = 243, # the index of the last block before the data gap
+                  Nblocksplit = 243, # the index of the last block before the data gap, this is specific to US-Vcp
                   Nyear = Nyear,
                   block = dataIN$block,
                   #WUE.ecostress = dataIN_wue$WUE,
@@ -224,34 +118,61 @@ ETpart <- function(dataIN, dataIN_wue, dataIN_gpp, key, chain=NULL, ECOSTRESS=T,
                   end.summer = dataIN_gpp$end.summer,
                   end.postmonsoon = dataIN_gpp$end.postmonsoon)
     }
-    
-  }
   
   ### Step 2: Initialize the model
   
   # Load initial values from previous run
   load(initfilename)
   
-  if(ECOSTRESS==F){ # temp for convergence
-    if(chain==2){
-      if(key %in% c("mpj","vcp","wjs")){
+# temp for convergence
+    if(chain %in% c(1,3)){
+      if(key %in% c("seg","ses", "mpj", "vcm1","vcm2")){
         
-        if(key== "wjs"){
-          lowdev = 1
-        }else if (key== "mpj"){
-          lowdev = 3
-        }else if (key== "vcp"){
-          lowdev = 1
+        if(key=="seg"){
+          if(chain %in% c(1,3)){
+            lowdev=2
+            initfilename <- paste("./models/inits/inits_noECO_", lowdev,"_", key, ".RData", sep = "")
+            load(initfilename)
+          }
         }
         
-        initfilename <- paste("./models/inits/inits_noECO_", lowdev,"_", key, ".RData", sep = "")
-        load(initfilename)
+        if(key=="ses"){
+          if(chain %in% c(1,3)){
+            lowdev=2
+            initfilename <- paste("./models/inits/inits_noECO_", lowdev,"_", key, ".RData", sep = "")
+            load(initfilename)
+          }
+        }
         
-        saved.state[["initials"]][[1]]<- lapply(saved.state[["initials"]][[1]], function(x) x*2)
+        if(key=="mpj"){
+          if(chain %in% c(1)){
+            lowdev=2
+            initfilename <- paste("./models/inits/inits_noECO_", lowdev,"_", key, ".RData", sep = "")
+            load(initfilename)
+          }
+        }
+        
+        if(key=="vcm1"){
+          if(chain %in% c(2)){
+            lowdev=1
+            
+            initfilename <- paste("./models/inits/inits_noECO_", lowdev,"_", key, ".RData", sep = "")
+            load(initfilename)
+          }
+        }
+        
+        if(key=="vcm2"){
+          if(chain %in% c(2,3)){
+            lowdev=1
+            
+            initfilename <- paste("./models/inits/inits_noECO_", lowdev,"_", key, ".RData", sep = "")
+            load(initfilename)
+          }
+        }
+
       }
     }
 
-  }
   
   if(inits_only==F){
     
@@ -263,14 +184,11 @@ ETpart <- function(dataIN, dataIN_wue, dataIN_gpp, key, chain=NULL, ECOSTRESS=T,
     n.chains = 1
   }
   
-  if(ECOSTRESS == T){
-    # If running the vcp site, run the split model to account for data gaps
-    model.name <- ifelse(key != "vcp", "./models/DEPART_model.R", "./models/DEPART_model_split.R")
-  } else if(ECOSTRESS == F){
-    model.name <- ifelse(key != "vcp", "./models/DEPART_model_noECO.R", "./models/DEPART_model_noECO_split.R")
-  }
+
+  # If running the vcp site, run the split model to account for data gaps
+  model.name <- ifelse(key != "vcp", "./models/DEPART_model.R", "./models/DEPART_model_split.R")
   
-    jm1.b=jags.model(model.name,
+  jm1.b=jags.model(model.name,
                      data=data,
                      n.chains=n.chains,
                      n.adapt=n.adapt,
@@ -283,18 +201,18 @@ ETpart <- function(dataIN, dataIN_wue, dataIN_gpp, key, chain=NULL, ECOSTRESS=T,
   
   # Choose the parameters to monitor. 
   
-  n.iter = 25000
+  n.iter = 50000
   
   params = c("ET", "E.model", "ET.pred", "ET.rep", "T.pred", "T.ratio",
              "WUE.annual","WUE.overall.annual", "WUE.overall.postmonsoon",
              "WUE.overall.spring","WUE.overall.summer", "WUE.overall.winter",
              "WUE.postmonsoon", "WUE.pred", "WUE.spring","WUE.summer", "WUE.wght", "WUE.winter",
              'bch.pred', "deviance", 'fc.pred', 'k.pred', "p", 'psisat.pred', "sig.ET","sig.WUE", 
-             "sig.ecostress", "slope", 'ssat.pred', 'sres.pred', "tau.ET", "tau.ecostress", 'vk.pred')
+             "slope", 'ssat.pred', 'sres.pred', "tau.ET", 'vk.pred')
   
   
   zc1 = coda.samples(jm1.b,variable.names=params,
-                     n.iter=n.iter,thin = 1)
+                     n.iter=n.iter,thin = 10)
   
   save(zc1, file = zcfilename)  # save the model output for graphs
   
@@ -303,32 +221,23 @@ ETpart <- function(dataIN, dataIN_wue, dataIN_gpp, key, chain=NULL, ECOSTRESS=T,
   #####################################################################
   # Part 5: Save inits for future runs
   
+  initfilename <- paste("./models/inits/inits_", chain,"_", key, ".RData", sep = "") # temp
+  
   if(inits_only==T){
     load(zcfilename)
   }
     
-    # inits to save
-  
-  if(ECOSTRESS==T){
-    params = c("ET", "E.model", "ET.pred", "ET.rep", "T.pred", "T.ratio",
-               "WUE.annual","WUE.overall.annual", "WUE.overall.postmonsoon",
-               "WUE.overall.spring","WUE.overall.summer", "WUE.overall.winter",
-               "WUE.postmonsoon", "WUE.pred", "WUE.spring","WUE.summer", "WUE.wght", "WUE.winter",
-               'bch.pred', "deviance", 'fc.pred', 'k.pred', "p", 'psisat.pred', "sig.ET","sig.WUE", 
-               "sig.ecostress", "slope", 'ssat.pred', 'sres.pred', "tau.ET", "tau.ecostress", 'vk.pred')
-  }else if(ECOSTRESS==F){
+    
+    # All parameters we tracked
     params = c("ET", "E.model", "ET.pred", "ET.rep", "T.pred", "T.ratio",
                "WUE.annual","WUE.overall.annual", "WUE.overall.postmonsoon",
                "WUE.overall.spring","WUE.overall.summer", "WUE.overall.winter",
                "WUE.postmonsoon", "WUE.pred", "WUE.spring","WUE.summer", "WUE.wght", "WUE.winter",
                'bch.pred', "deviance", 'fc.pred', 'k.pred', "p", 'psisat.pred', "sig.ET","sig.WUE", 
                "slope", 'ssat.pred', 'sres.pred', "tau.ET", 'vk.pred')
-  }
-    init_names = c("tau.ET","sig.WUE","sig.ecostress")
     
-    if(ECOSTRESS==F){
-      init_names = c("tau.ET","sig.WUE")
-    }
+    # inits to save
+    init_names = c("tau.ET","sig.WUE")
     
     # variables to remove
     get_remove_index <- function(to_keep, list){
@@ -357,7 +266,7 @@ ETpart <- function(dataIN, dataIN_wue, dataIN_gpp, key, chain=NULL, ECOSTRESS=T,
     #check both items in list
     save(saved.state, file=initfilename)
     
-    # print deviance of chain
+    # print deviance of chain (If running all three chains, this will just print the deviance of the first chain)
     dev_col <- which(colnames(zc1[[1]]) == "deviance")
     dev1<- mean(zc1[[1]][,dev_col])
     print(paste("deviance: ", dev1, sep=""))

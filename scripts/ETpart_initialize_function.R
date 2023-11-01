@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 
-get_ETpart_inits <- function(dataIN, dataIN_wue, dataIN_gpp, key, chain=NULL, ECOSTRESS=T){
+get_ETpart_inits <- function(dataIN, dataIN_wue, dataIN_gpp, key, chain=NULL){
   
   # Create necessary folders if they do not already exist
   if(!file.exists("models/inits")) { dir.create("models/inits")}
@@ -8,16 +8,10 @@ get_ETpart_inits <- function(dataIN, dataIN_wue, dataIN_gpp, key, chain=NULL, EC
   # Define filenames
   if(is.null(chain)){
   initfilename <- paste("./models/inits/inits_", key, ".RData", sep = "")
-    if(ECOSTRESS == F){
-      initfilename <- paste("./models/inits/inits_noECO_", key, ".RData", sep = "")
-    }
   }
   # If running on an HPC, save the initials by chain number
   if(!is.null(chain)){
     initfilename <- paste("./models/inits/inits_", chain,"_",key, ".RData", sep = "")
-    if(ECOSTRESS == F){
-      initfilename <- paste("./models/inits/inits_noECO_", chain,"_", key, ".RData", sep = "")
-    }
   } 
   
   Nblocks = length(unique(dataIN$block))
@@ -253,12 +247,9 @@ get_ETpart_inits <- function(dataIN, dataIN_wue, dataIN_gpp, key, chain=NULL, EC
     n.chains = 1
   }
   
-  if(ECOSTRESS == T){
-    # If running the vcp site, run the split model to account for data gaps
-    model.name <- ifelse(key != "vcp", "./models/DEPART_model.R", "./models/DEPART_model_split.R")
-  } else if(ECOSTRESS == F){
-    model.name <- ifelse(key != "vcp", "./models/DEPART_model_noECO.R", "./models/DEPART_model_noECO_split.R")
-  }
+
+  # If running the vcp site, run the split model to account for data gaps
+  model.name <- ifelse(key != "vcp", "./models/DEPART_model.R", "./models/DEPART_model_split.R")
   
   
   jm1.b=jags.model(model.name,
@@ -274,9 +265,7 @@ get_ETpart_inits <- function(dataIN, dataIN_wue, dataIN_gpp, key, chain=NULL, EC
   n.iter = 1000
   
   # Choose the parameters to monitor. 
-  params = c("tau.ET", "sig.WUE", "sig.ecostress")
-  
-  if(ECOSTRESS == F){params = c("tau.ET", "sig.WUE")}
+  params = c("tau.ET", "sig.WUE")
   
   start<-proc.time()
   zc1 = coda.samples(jm1.b,variable.names=params,
