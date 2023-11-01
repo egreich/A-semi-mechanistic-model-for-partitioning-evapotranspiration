@@ -1,4 +1,4 @@
-# A semi-mechanistic model for partitioning evapotranspiration reveals soil moisture controls water-use efficiency more frequently 
+# A semi-mechanistic model for partitioning evapotranspiration reveals demand and supply moisture controls over plant water-use efficiency are temporally distinct
 
 This repository contains the code and models for the paper *A semi-mechanistic model for partitioning evapotranspiration reveals a shift to soil moisture-controlled water-use efficiency along an aridity gradient*. An explanation of the file structure is below:
 
