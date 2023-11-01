@@ -1,5 +1,7 @@
 #!/usr/bin/env Rscript
 
+### These functions work with coda objects to save useful values in convenient formats
+
 # Function to summarize coda
 coda_rows_to_cols <- function(var_list, coda_sum = NULL, df = NULL, colnams = NULL, to_join = NULL){
   

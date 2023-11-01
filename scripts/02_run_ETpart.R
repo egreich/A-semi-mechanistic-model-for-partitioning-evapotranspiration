@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 
 ###########################################################################################
-######################### Apply ET part function, saving dataframes in a list #############
+######################### Apply ET part function #############
 ###########################################################################################
 
 # Set run arguments. These arguments are set in the shell script when running on an HPC.

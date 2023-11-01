@@ -28,7 +28,6 @@ ETpart <- function(dataIN, dataIN_wue, dataIN_gpp, key, chain=NULL, ECOSTRESS=T,
                 N = N, # Number of rows
                 Nyear = Nyear,
                 block = dataIN$block,
-                #WUE.ecostress = dataIN_wue$WUE,
                 Esnow = dataIN$Esnow,
                 Tsoil = dataIN$Tsoil,
                 S = dataIN$S,
@@ -76,7 +75,6 @@ ETpart <- function(dataIN, dataIN_wue, dataIN_gpp, key, chain=NULL, ECOSTRESS=T,
                   Nblocksplit = 243, # the index of the last block before the data gap, this is specific to US-Vcp
                   Nyear = Nyear,
                   block = dataIN$block,
-                  #WUE.ecostress = dataIN_wue$WUE,
                   Esnow = dataIN$Esnow,
                   Tsoil = dataIN$Tsoil,
                   S = dataIN$S,
@@ -123,56 +121,6 @@ ETpart <- function(dataIN, dataIN_wue, dataIN_gpp, key, chain=NULL, ECOSTRESS=T,
   
   # Load initial values from previous run
   load(initfilename)
-  
-# temp for convergence
-    if(chain %in% c(1,3)){
-      if(key %in% c("seg","ses", "mpj", "vcm1","vcm2")){
-        
-        if(key=="seg"){
-          if(chain %in% c(1,3)){
-            lowdev=2
-            initfilename <- paste("./models/inits/inits_noECO_", lowdev,"_", key, ".RData", sep = "")
-            load(initfilename)
-          }
-        }
-        
-        if(key=="ses"){
-          if(chain %in% c(1,3)){
-            lowdev=2
-            initfilename <- paste("./models/inits/inits_noECO_", lowdev,"_", key, ".RData", sep = "")
-            load(initfilename)
-          }
-        }
-        
-        if(key=="mpj"){
-          if(chain %in% c(1)){
-            lowdev=2
-            initfilename <- paste("./models/inits/inits_noECO_", lowdev,"_", key, ".RData", sep = "")
-            load(initfilename)
-          }
-        }
-        
-        if(key=="vcm1"){
-          if(chain %in% c(2)){
-            lowdev=1
-            
-            initfilename <- paste("./models/inits/inits_noECO_", lowdev,"_", key, ".RData", sep = "")
-            load(initfilename)
-          }
-        }
-        
-        if(key=="vcm2"){
-          if(chain %in% c(2,3)){
-            lowdev=1
-            
-            initfilename <- paste("./models/inits/inits_noECO_", lowdev,"_", key, ".RData", sep = "")
-            load(initfilename)
-          }
-        }
-
-      }
-    }
-
   
   if(inits_only==F){
     
