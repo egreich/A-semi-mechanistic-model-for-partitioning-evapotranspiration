@@ -1,11 +1,15 @@
+
+# Suppress files related to R project
 .Rproj.user
 .Rhistory
 .RData
 .Ruserdata
 *.Rproj
+
+# Suppress files related specifically to Macs
 .DS_Store
 
-# Suppress folders
+# Suppress folders with large files
 input_data/*
 input_data.zip
 clean_data/*
@@ -16,6 +20,8 @@ output_dfs/*
 output_dfs_new/*
 output_dfs.zip
 plots/*
+A-semi-mechanistic-model-for-partitioning-evapotranspiration/*
+A-semi-mechanistic-model-for-partitioning-evapotranspiration.zip
 
 # Suppress scripts we used to explore the output
 07a_output_summary.R
