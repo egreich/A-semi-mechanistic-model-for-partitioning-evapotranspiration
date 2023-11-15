@@ -1,4 +1,4 @@
-# A semi-mechanistic model for partitioning evapotranspiration reveals supply and demand moisture controls over plant water-use efficiency are temporally distinct
+# A semi-mechanistic model for partitioning evapotranspiration reveals scale-dependent moisture supply and demand controls water-use efficiency
 
 This repository contains the code and models for the paper *A semi-mechanistic model for partitioning evapotranspiration reveals supply and demand moisture controls over plant water-use efficiency are temporally distinct*. An explanation of the file structure is below:
 

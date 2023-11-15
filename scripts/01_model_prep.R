@@ -35,13 +35,12 @@ dataIN_seg[is.nan(dataIN_seg)] <- NA # should convert Nan to NA
 
 # Group variables by block and save in dataframe
 dataIN_wue_seg <- dataIN_seg %>%
-  dplyr::select(year, water_year, month, GPP, WUE, P, P_acc, LAI_mod, VPD, S, Smid, Sdeep, Tair, Tsoil, PPFD_IN, block) %>%
+  dplyr::select(year, water_year, month, GPP, P, P_acc, LAI_mod, VPD, S, Smid, Sdeep, Tair, Tsoil, PPFD_IN, block) %>%
   group_by(block) %>%
   summarise(year = mean(year), water_year = mean(water_year), GPP_avg = mean(GPP), GPP_total = sum(GPP), 
             P_avg = mean(P), P_total = sum(P), P_acc = max(P_acc),
             LAI_mod = mean(LAI_mod), VPD = mean(VPD), S = mean(S), Smid = mean(Smid), Sdeep = mean(Sdeep),
-            Tair = mean(Tair), Tsoil = mean(Tsoil), PPFD_IN = mean(PPFD_IN),
-            WUE = mean(WUE, na.rm = T))
+            Tair = mean(Tair), Tsoil = mean(Tsoil), PPFD_IN = mean(PPFD_IN))
 dataIN_wue_seg$year <- round(dataIN_wue_seg$year) # round year for weeks that cross over
 dataIN_wue_seg$water_year <- round(dataIN_wue_seg$water_year) # round water year for weeks that cross over
 d_GPP_mean <- dataIN_wue_seg %>% # summary stats for yearly GPP
@@ -106,7 +105,7 @@ dataIN_gpp_seg <- dataIN_wue_seg %>%
   mutate(start.winter = seg_winter_start$block,
          start.spring = seg_spring_start$block,
          start.summer = seg_summer_start$block,
-         start.postmonsoon = seg_postmonsoon_start$block,
+         start.postmonsoon = seg_postmonsoon_start$block[1:13],
          end.winter = seg_winter_end$block,
          end.spring = seg_spring_end$block,
          end.summer = seg_summer_end$block,
@@ -140,13 +139,12 @@ dataIN_ses[is.nan(dataIN_ses)] <- NA # should convert Nan to NA
 
 # Group variables by block and save in dataframe
 dataIN_wue_ses <- dataIN_ses %>%
-  dplyr::select(year, water_year, month, GPP, WUE, P, P_acc, LAI_mod, VPD, S, Smid, Sdeep, Tair, Tsoil, PPFD_IN, block) %>%
+  dplyr::select(year, water_year, month, GPP, P, P_acc, LAI_mod, VPD, S, Smid, Sdeep, Tair, Tsoil, PPFD_IN, block) %>%
   group_by(block) %>%
   summarise(year = mean(year), water_year = mean(water_year), GPP_avg = mean(GPP), GPP_total = sum(GPP), 
             P_avg = mean(P), P_total = sum(P), P_acc = max(P_acc),
             LAI_mod = mean(LAI_mod), VPD = mean(VPD), S = mean(S), Smid = mean(Smid), Sdeep = mean(Sdeep),
-            Tair = mean(Tair), Tsoil = mean(Tsoil), PPFD_IN = mean(PPFD_IN),
-            WUE = mean(WUE, na.rm = T))
+            Tair = mean(Tair), Tsoil = mean(Tsoil), PPFD_IN = mean(PPFD_IN))
 dataIN_wue_ses$year <- round(dataIN_wue_ses$year) # round year for weeks that cross over
 dataIN_wue_ses$water_year <- round(dataIN_wue_ses$water_year) # round water year for weeks that cross over
 d_GPP_mean <- dataIN_wue_ses %>% # summary stats for yearly GPP
@@ -211,7 +209,7 @@ dataIN_gpp_ses <- dataIN_wue_ses %>%
   mutate(start.winter = ses_winter_start$block,
          start.spring = ses_spring_start$block,
          start.summer = ses_summer_start$block,
-         start.postmonsoon = ses_postmonsoon_start$block,
+         start.postmonsoon = ses_postmonsoon_start$block[1:13],
          end.winter = ses_winter_end$block,
          end.spring = ses_spring_end$block,
          end.summer = ses_summer_end$block,
@@ -246,13 +244,12 @@ dataIN_wjs[is.nan(dataIN_wjs)] <- NA # should convert Nan to NA
 
 # Group variables by block and save in dataframe
 dataIN_wue_wjs <- dataIN_wjs %>%
-  dplyr::select(year, water_year, month, GPP, WUE, P, P_acc, LAI_mod, VPD, S, Smid, Sdeep, Tair, Tsoil, PPFD_IN, block) %>%
+  dplyr::select(year, water_year, month, GPP, P, P_acc, LAI_mod, VPD, S, Smid, Sdeep, Tair, Tsoil, PPFD_IN, block) %>%
   group_by(block) %>%
   summarise(year = mean(year), water_year = mean(water_year), GPP_avg = mean(GPP), GPP_total = sum(GPP), 
             P_avg = mean(P), P_total = sum(P), P_acc = max(P_acc),
             LAI_mod = mean(LAI_mod), VPD = mean(VPD), S = mean(S), Smid = mean(Smid), Sdeep = mean(Sdeep),
-            Tair = mean(Tair), Tsoil = mean(Tsoil), PPFD_IN = mean(PPFD_IN),
-            WUE = mean(WUE, na.rm = T))
+            Tair = mean(Tair), Tsoil = mean(Tsoil), PPFD_IN = mean(PPFD_IN))
 dataIN_wue_wjs$year <- round(dataIN_wue_wjs$year) # round year for weeks that cross over
 dataIN_wue_wjs$water_year <- round(dataIN_wue_wjs$water_year) # round water year for weeks that cross over
 d_GPP_mean <- dataIN_wue_wjs %>% # summary stats for yearly GPP
@@ -353,13 +350,12 @@ dataIN_mpj[is.nan(dataIN_mpj)] <- NA # should convert Nan to NA
 
 # Group variables by block and save in dataframe
 dataIN_wue_mpj <- dataIN_mpj %>%
-  dplyr::select(year, water_year, month, GPP, WUE, P, P_acc, LAI_mod, VPD, S, Smid, Sdeep, Tair, Tsoil, PPFD_IN, block) %>%
+  dplyr::select(year, water_year, month, GPP, P, P_acc, LAI_mod, VPD, S, Smid, Sdeep, Tair, Tsoil, PPFD_IN, block) %>%
   group_by(block) %>%
   summarise(year = mean(year), water_year = mean(water_year), GPP_avg = mean(GPP), GPP_total = sum(GPP), 
             P_avg = mean(P), P_total = sum(P), P_acc = max(P_acc),
             LAI_mod = mean(LAI_mod), VPD = mean(VPD), S = mean(S), Smid = mean(Smid), Sdeep = mean(Sdeep),
-            Tair = mean(Tair), Tsoil = mean(Tsoil), PPFD_IN = mean(PPFD_IN),
-            WUE = mean(WUE, na.rm = T))
+            Tair = mean(Tair), Tsoil = mean(Tsoil), PPFD_IN = mean(PPFD_IN))
 dataIN_wue_mpj$year <- round(dataIN_wue_mpj$year) # round year for weeks that cross over
 dataIN_wue_mpj$water_year <- round(dataIN_wue_mpj$water_year) # round water year for weeks that cross over
 d_GPP_mean <- dataIN_wue_mpj %>% # summary stats for yearly GPP
@@ -460,13 +456,12 @@ dataIN_vcp[is.nan(dataIN_vcp)] <- NA # should convert Nan to NA
 
 # Group variables by block and save in dataframe
 dataIN_wue_vcp <- dataIN_vcp %>%
-  dplyr::select(year, water_year, month, GPP, WUE, P, P_acc, LAI_mod, VPD, S, Smid, Sdeep, Tair, Tsoil, PPFD_IN, block) %>%
+  dplyr::select(year, water_year, month, GPP, P, P_acc, LAI_mod, VPD, S, Smid, Sdeep, Tair, Tsoil, PPFD_IN, block) %>%
   group_by(block) %>%
   summarise(year = mean(year), water_year = mean(water_year), GPP_avg = mean(GPP), GPP_total = sum(GPP), 
             P_avg = mean(P), P_total = sum(P), P_acc = max(P_acc),
             LAI_mod = mean(LAI_mod), VPD = mean(VPD), S = mean(S), Smid = mean(Smid), Sdeep = mean(Sdeep),
-            Tair = mean(Tair), Tsoil = mean(Tsoil), PPFD_IN = mean(PPFD_IN),
-            WUE = mean(WUE, na.rm = T))
+            Tair = mean(Tair), Tsoil = mean(Tsoil), PPFD_IN = mean(PPFD_IN))
 dataIN_wue_vcp$year <- round(dataIN_wue_vcp$year) # round year for weeks that cross over
 dataIN_wue_vcp$water_year <- round(dataIN_wue_vcp$water_year) # round water year for weeks that cross over
 d_GPP_mean <- dataIN_wue_vcp %>% # summary stats for yearly GPP
@@ -574,13 +569,12 @@ dataIN_vcm1[is.nan(dataIN_vcm1)] <- NA # should convert Nan to NA
 
 # Group variables by block and save in dataframe
 dataIN_wue_vcm1 <- dataIN_vcm1 %>%
-  dplyr::select(year, water_year, month, GPP, WUE, P, P_acc, LAI_mod, VPD, S, Smid, Sdeep, Tair, Tsoil, PPFD_IN, block) %>%
+  dplyr::select(year, water_year, month, GPP, P, P_acc, LAI_mod, VPD, S, Smid, Sdeep, Tair, Tsoil, PPFD_IN, block) %>%
   group_by(block) %>%
   summarise(year = mean(year), water_year = mean(water_year), GPP_avg = mean(GPP), GPP_total = sum(GPP), 
             P_avg = mean(P), P_total = sum(P), P_acc = max(P_acc),
             LAI_mod = mean(LAI_mod), VPD = mean(VPD), S = mean(S), Smid = mean(Smid), Sdeep = mean(Sdeep),
-            Tair = mean(Tair), Tsoil = mean(Tsoil), PPFD_IN = mean(PPFD_IN),
-            WUE = mean(WUE, na.rm = T))
+            Tair = mean(Tair), Tsoil = mean(Tsoil), PPFD_IN = mean(PPFD_IN))
 dataIN_wue_vcm1$year <- round(dataIN_wue_vcm1$year) # round year for weeks that cross over
 dataIN_wue_vcm1$water_year <- round(dataIN_wue_vcm1$water_year) # round water year for weeks that cross over
 d_GPP_mean <- dataIN_wue_vcm1 %>% # summary stats for yearly GPP
@@ -677,13 +671,12 @@ dataIN_vcm2[is.nan(dataIN_vcm2)] <- NA # should convert Nan to NA
 
 # Group variables by block and save in dataframe
 dataIN_wue_vcm2 <- dataIN_vcm2 %>%
-  dplyr::select(year, water_year, month, GPP, WUE, P, P_acc, LAI_mod, VPD, S, Smid, Sdeep, Tair, Tsoil, PPFD_IN, block) %>%
+  dplyr::select(year, water_year, month, GPP, P, P_acc, LAI_mod, VPD, S, Smid, Sdeep, Tair, Tsoil, PPFD_IN, block) %>%
   group_by(block) %>%
   summarise(year = mean(year), water_year = mean(water_year), GPP_avg = mean(GPP), GPP_total = sum(GPP), 
             P_avg = mean(P), P_total = sum(P), P_acc = max(P_acc),
             LAI_mod = mean(LAI_mod), VPD = mean(VPD), S = mean(S), Smid = mean(Smid), Sdeep = mean(Sdeep),
-            Tair = mean(Tair), Tsoil = mean(Tsoil), PPFD_IN = mean(PPFD_IN),
-            WUE = mean(WUE, na.rm = T))
+            Tair = mean(Tair), Tsoil = mean(Tsoil), PPFD_IN = mean(PPFD_IN))
 dataIN_wue_vcm2$year <- round(dataIN_wue_vcm2$year) # round year for weeks that cross over
 dataIN_wue_vcm2$water_year <- round(dataIN_wue_vcm2$water_year) # round water year for weeks that cross over
 d_GPP_mean <- dataIN_wue_vcm2 %>% # summary stats for yearly GPP
@@ -753,7 +746,7 @@ dataIN_gpp_vcm2 <- dataIN_wue_vcm2 %>%
   mutate(start.winter = c(1,vcm_winter_start$block), # The first winter period has missing data, so here we'll shift the start date
          start.spring = vcm_spring_start$block,
          start.summer = vcm_summer_start$block,
-         start.postmonsoon = c(1, vcm_postmonsoon_start$block), # The first postmonsoon period is missing data, so we'll use a filler here, and add in NAs later
+         start.postmonsoon = c(1, vcm_postmonsoon_start$block)[1:7], # The first postmonsoon period is missing data, so we'll use a filler here, and add in NAs later
          end.winter = vcm_winter_end$block,
          end.spring = vcm_spring_end$block,
          end.summer = vcm_summer_end$block,
@@ -787,13 +780,12 @@ dataIN_vcs[is.nan(dataIN_vcs)] <- NA # should convert Nan to NA
 
 # Group variables by block and save in dataframe
 dataIN_wue_vcs <- dataIN_vcs %>%
-  dplyr::select(year, water_year, month, GPP, WUE, P, P_acc, LAI_mod, VPD, S, Smid, Sdeep, Tair, Tsoil, PPFD_IN, block) %>%
+  dplyr::select(year, water_year, month, GPP, P, P_acc, LAI_mod, VPD, S, Smid, Sdeep, Tair, Tsoil, PPFD_IN, block) %>%
   group_by(block) %>%
   summarise(year = mean(year), water_year = mean(water_year), GPP_avg = mean(GPP), GPP_total = sum(GPP), 
             P_avg = mean(P), P_total = sum(P), P_acc = max(P_acc),
             LAI_mod = mean(LAI_mod), VPD = mean(VPD), S = mean(S), Smid = mean(Smid), Sdeep = mean(Sdeep),
-            Tair = mean(Tair), Tsoil = mean(Tsoil), PPFD_IN = mean(PPFD_IN),
-            WUE = mean(WUE, na.rm = T))
+            Tair = mean(Tair), Tsoil = mean(Tsoil), PPFD_IN = mean(PPFD_IN))
 dataIN_wue_vcs$year <- round(dataIN_wue_vcs$year) # round year for weeks that cross over
 dataIN_wue_vcs$water_year <- round(dataIN_wue_vcs$water_year) # round water year for weeks that cross over
 d_GPP_mean <- dataIN_wue_vcs %>% # summary stats for yearly GPP
@@ -859,7 +851,7 @@ dataIN_gpp_vcs <- dataIN_wue_vcs %>%
   mutate(start.winter = vcs_winter_start$block,
          start.spring = vcs_spring_start$block,
          start.summer = vcs_summer_start$block,
-         start.postmonsoon = vcs_postmonsoon_start$block,
+         start.postmonsoon = vcs_postmonsoon_start$block[1:4],
          end.winter = vcs_winter_end$block,
          end.spring = vcs_spring_end$block,
          end.summer = vcs_summer_end$block,

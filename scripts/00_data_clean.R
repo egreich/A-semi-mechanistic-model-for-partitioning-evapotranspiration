@@ -144,54 +144,7 @@ dataIN_vcm_lai <- dataIN_vcm_lai %>%
 dataIN_vcs_lai <- read.csv("./input_data/LAI/vcs_statistics_Lai_500m.csv")
 dataIN_vcs_lai$Date <- as.Date(dataIN_vcs_lai$dt,"%m/%d/%y")
 dataIN_vcs_lai <- dataIN_vcs_lai %>%
-  transmute(Date = Date, LAI = value_mean)
-
-# Load WUE ECOSTRESS
-d_wue = read.csv("./input_data/ECOSTRESS/NMEG-WUE-ECO4WUE-001-results.csv")
-d_wue$Date <- as.Date(d_wue$Date,"%Y-%m-%d")
-
-d_ses_wue <- d_wue %>%
-  filter(ID == "US-Ses")
-d_ses_wue <- d_ses_wue %>%
-  rename(WUE = ECO4WUE_001_Water_Use_Efficiency_WUEavg) %>%
-  dplyr::select(-Category, -ID, -Latitude, -Longitude, -Orbit.Number, -Build.ID, -Scene.ID)
-
-d_seg_wue <- d_wue %>%
-  filter(ID == "US-Seg")
-d_seg_wue <- d_seg_wue %>%
-  rename(WUE = ECO4WUE_001_Water_Use_Efficiency_WUEavg) %>%
-  dplyr::select(-Category, -ID, -Latitude, -Longitude, -Orbit.Number, -Build.ID, -Scene.ID)
-
-d_wjs_wue <- d_wue %>%
-  filter(ID == "US-Wjs")
-d_wjs_wue <- d_wjs_wue %>%
-  rename(WUE = ECO4WUE_001_Water_Use_Efficiency_WUEavg) %>%
-  dplyr::select(-Category, -ID, -Latitude, -Longitude, -Orbit.Number, -Build.ID, -Scene.ID)
-
-d_mpj_wue <- d_wue %>%
-  filter(ID == "US-Mpj")
-d_mpj_wue <- d_mpj_wue %>%
-  rename(WUE = ECO4WUE_001_Water_Use_Efficiency_WUEavg) %>%
-  dplyr::select(-Category, -ID, -Latitude, -Longitude, -Orbit.Number, -Build.ID, -Scene.ID)
-
-d_vcp_wue <- d_wue %>%
-  filter(ID == "US-Vcp")
-d_vcp_wue <- d_vcp_wue %>%
-  rename(WUE = ECO4WUE_001_Water_Use_Efficiency_WUEavg) %>%
-  dplyr::select(-Category, -ID, -Latitude, -Longitude, -Orbit.Number, -Build.ID, -Scene.ID)
-
-d_vcm_wue <- d_wue %>%
-  filter(ID == "US-Vcm")
-d_vcm_wue <- d_vcm_wue %>%
-  rename(WUE = ECO4WUE_001_Water_Use_Efficiency_WUEavg) %>%
-  dplyr::select(-Category, -ID, -Latitude, -Longitude, -Orbit.Number, -Build.ID, -Scene.ID)
-
-d_vcs_wue <- d_wue %>%
-  filter(ID == "US-Vcs")
-d_vcs_wue <- d_vcs_wue %>%
-  rename(WUE = ECO4WUE_001_Water_Use_Efficiency_WUEavg) %>%
-  dplyr::select(-Category, -ID, -Latitude, -Longitude, -Orbit.Number, -Build.ID, -Scene.ID)
-
+   transmute(Date = Date, LAI = value_mean)
 
 # Load gap-filled SWC data based on linear interpolation and SOILWAT2 outputs
 # We will summarize the depths as follows:
@@ -240,49 +193,42 @@ dataIN_vcs_soilwatGF <- dataIN_vcs_soilwatGF %>%
 dataIN_ses_com = left_join(dataIN_ses, dataIN_ses_soilmet, by = "Date")
 dataIN_ses_com = full_join(dataIN_ses_com, dataIN_ses_ws, by = "Date")
 dataIN_ses_com = full_join(dataIN_ses_com, dataIN_ses_lai, by = "Date")
-dataIN_ses_com <- full_join(dataIN_ses_com, d_ses_wue, by="Date")
 dataIN_ses_com <- left_join(dataIN_ses_com, dataIN_ses_soilwatGF, by="Date")
 dataIN_ses_com <- dataIN_ses_com[1:5115,] # Get rid of earlier dates from MODIS that were dropped at the end of 2020
 
 dataIN_seg_com = left_join(dataIN_seg, dataIN_seg_soilmet, by = "Date")
 dataIN_seg_com = full_join(dataIN_seg_com, dataIN_seg_ws, by = "Date")
 dataIN_seg_com = full_join(dataIN_seg_com, dataIN_seg_lai, by = "Date")
-dataIN_seg_com <- full_join(dataIN_seg_com, d_seg_wue, by="Date")
 dataIN_seg_com <- left_join(dataIN_seg_com, dataIN_seg_soilwatGF, by="Date")
 dataIN_seg_com <- dataIN_seg_com[1:5115,] # Get rid of earlier dates from MODIS that were dropped at the end of 2020
 
 dataIN_wjs_com = left_join(dataIN_wjs, dataIN_wjs_soilmet, by = "Date")
 dataIN_wjs_com = full_join(dataIN_wjs_com, dataIN_wjs_ws, by = "Date")
 dataIN_wjs_com = full_join(dataIN_wjs_com, dataIN_wjs_lai, by = "Date")
-dataIN_wjs_com <- full_join(dataIN_wjs_com, d_wjs_wue, by="Date")
 dataIN_wjs_com <- left_join(dataIN_wjs_com, dataIN_wjs_soilwatGF, by="Date")
 dataIN_wjs_com <- dataIN_wjs_com[1:5114,] # Get rid of earlier dates from MODIS that were dropped at the end of 2020
 
 dataIN_mpj_com = left_join(dataIN_mpj, dataIN_mpj_soilmet, by = "Date")
 dataIN_mpj_com = full_join(dataIN_mpj_com, dataIN_mpj_ws, by = "Date")
 dataIN_mpj_com = full_join(dataIN_mpj_com, dataIN_mpj_lai, by = "Date")
-dataIN_mpj_com <- full_join(dataIN_mpj_com, d_mpj_wue, by="Date")
 dataIN_mpj_com <- left_join(dataIN_mpj_com, dataIN_mpj_soilwatGF, by="Date")
 dataIN_mpj_com <- dataIN_mpj_com[1:4749,] # Get rid of earlier dates from MODIS that were dropped at the end of 2020
 
 dataIN_vcp_com = left_join(dataIN_vcp, dataIN_vcp_soilmet, by = "Date")
 dataIN_vcp_com = full_join(dataIN_vcp_com, dataIN_vcp_ws, by = "Date")
 dataIN_vcp_com = full_join(dataIN_vcp_com, dataIN_vcp_lai, by = "Date")
-dataIN_vcp_com <- full_join(dataIN_vcp_com, d_vcp_wue, by="Date")
 dataIN_vcp_com <- left_join(dataIN_vcp_com, dataIN_vcp_soilwatGF, by="Date")
 dataIN_vcp_com <- dataIN_vcp_com[1:5114,] # Get rid of earlier dates from MODIS that were dropped at the end of 2020
 
 dataIN_vcm_com = left_join(dataIN_vcm, dataIN_vcm_soilmet, by = "Date")
 dataIN_vcm_com = full_join(dataIN_vcm_com, dataIN_vcm_ws, by = "Date")
 dataIN_vcm_com = full_join(dataIN_vcm_com, dataIN_vcm_lai, by = "Date")
-dataIN_vcm_com <- full_join(dataIN_vcm_com, d_vcm_wue, by="Date")
 dataIN_vcm_com <- left_join(dataIN_vcm_com, dataIN_vcm_soilwatGF, by="Date")
 dataIN_vcm_com <- dataIN_vcm_com[1:5115,] # Get rid of earlier dates from MODIS that were dropped at the end of 2020
 
 dataIN_vcs_com = left_join(dataIN_vcs, dataIN_vcs_soilmet, by = "Date")
 dataIN_vcs_com = full_join(dataIN_vcs_com, dataIN_vcs_ws, by = "Date")
 dataIN_vcs_com = full_join(dataIN_vcs_com, dataIN_vcs_lai, by = "Date")
-dataIN_vcs_com <- full_join(dataIN_vcs_com, d_vcs_wue, by="Date")
 dataIN_vcs_com <- left_join(dataIN_vcs_com, dataIN_vcs_soilwatGF, by="Date")
 dataIN_vcs_com <- dataIN_vcs_com[1:1828,] # Get rid of earlier dates from MODIS that were dropped at the end of 2020
 
@@ -310,7 +256,7 @@ d1 <- lapply(d,
 d1$month_name <- factor(d1$month_name, levels=unique(d1$month_name))
 
 
-### Set up dataframes to feed into Kemp soil evaporation equation
+### Set up dataframes to feed into soil evaporation equation
 
 # Heights are from the NMEG final proposal
 # Calculate atmospheric pressure at elevation h
@@ -338,7 +284,6 @@ d_ses <- data.frame(d1[1]) %>% # shrubland, fix what data source you are getting
          Tsoil = dataIN_ses_com$SOILT_2cm_gf, 
          ws = dataIN_ses_com$ws,
          LAI_mod = dataIN_ses_com$LAI,
-         WUE = dataIN_ses_com$WUE,
          Z = 3.1,
          h = 1593,
          fc = 0.1671617535,
@@ -384,7 +329,6 @@ d_seg <- data.frame(d1[2]) %>% # C4 grassland
          Tsoil = dataIN_seg_com$SOILT_2cm_gf, 
          ws = dataIN_seg_com$ws,
          LAI_mod = dataIN_seg_com$LAI,
-         WUE = dataIN_seg_com$WUE,
          Z = 3.1,
          h = 1622,
          fc = 0.095839071,
@@ -424,7 +368,6 @@ d_wjs <- data.frame(d1[3]) %>% # juniper savanah
          Tsoil = dataIN_wjs_com$SOILT_5cm_gf, 
          ws = dataIN_wjs_com$ws,
          LAI_mod = dataIN_wjs_com$LAI,
-         WUE = dataIN_wjs_com$WUE,
          Z = 2,
          h = 1931,
          fc = 0.1236241678,
@@ -466,7 +409,6 @@ d_mpj <- data.frame(d1[4]) %>% # mixed pinyon-juniper
          Tsoil = dataIN_mpj_com$SOILT_5cm_gf, 
          ws = dataIN_mpj_com$ws,
          LAI_mod = dataIN_mpj_com$LAI,
-         WUE = dataIN_mpj_com$WUE,
          Z = 9.33,
          h = 2196,
          fc = 0.2108608921,
@@ -509,7 +451,6 @@ d_vcp <- data.frame(d1[5]) %>% # ponderosa
          Tsoil = dataIN_vcp_com$SOILT_5cm_gf, 
          ws = dataIN_vcp_com$ws,
          LAI_mod = dataIN_vcp_com$LAI,
-         WUE = dataIN_vcp_com$WUE,
          Z = 23.8,
          h = 2500,
          fc = 0.170707754,
@@ -552,7 +493,6 @@ d_vcm <- data.frame(d1[6]) %>% # mixed conifer
          Tsoil = dataIN_vcm_com$SOILT_5cm_gf, 
          ws = dataIN_vcm_com$ws,
          LAI_mod = dataIN_vcm_com$LAI,
-         WUE = dataIN_vcm_com$WUE,
          Z = 23.6,
          h = 3000,
          fc = 0.113109521,
@@ -594,7 +534,6 @@ d_vcs <- data.frame(d1[7]) %>% # mixed conifer
          Tsoil = dataIN_vcs_com$SOILT_5cm_gf, 
          ws = dataIN_vcs_com$ws,
          LAI_mod = dataIN_vcs_com$LAI,
-         WUE = dataIN_vcs_com$WUE,
          Z = 23.6,
          h = 3000,
          fc = 0.141555947,
